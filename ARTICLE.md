@@ -22,7 +22,7 @@ Before getting into results, here's what each tool actually does. These aren't i
 
 **Superpowers** ([github.com/obra/superpowers](https://github.com/obra/superpowers), 94K+ stars) is a subagent-driven development framework. When you give it a task, it doesn't just generate code — it dispatches specialized subagents in parallel. A planning agent breaks the problem down. Implementation agents write code concurrently. Then a two-stage review process kicks in: first a spec-compliance check (does the code match the requirements?), then a code-quality review (is the code well-structured?). Superpowers uses a skill-based architecture where agents have defined capabilities and constraints. It ran natively in this experiment — the only orchestrator that did.
 
-**DeerFlow 2.0** ([github.com/bytedance/deer-flow](https://github.com/bytedance/deer-flow), ByteDance) follows a Research → Plan → Code → Review pipeline. What distinguishes it is the research phase: before any code is written, a research agent examines best practices, common patterns, and potential pitfalls for the task at hand. This front-loaded research gets passed to the coding agent as context. DeerFlow also maintains sub-agent memory across tasks within a session, so later tasks can reference decisions made in earlier ones. It requires Python 3.12+ and couldn't run natively on our ARM64 test machine (Jetson runs Python 3.10). Its workflow was simulated following the documented architecture.
+**DeerFlow 2.0** ([github.com/bytedance/deer-flow](https://github.com/bytedance/deer-flow), ByteDance) follows a Research → Plan → Code → Review pipeline. What distinguishes it is the research phase: before any code is written, a research agent examines best practices, common patterns, and potential pitfalls for the task at hand. This front-loaded research gets passed to the coding agent as context. DeerFlow also maintains sub-agent memory across tasks within a session, so later tasks can reference decisions made in earlier ones. DeerFlow ran natively using the embedded Python client (`DeerFlowClient`) with GitHub Models API (gpt-4o) as the LLM backend — after installing Python 3.12 via pyenv on the ARM64 test machine. The results were illuminating: the native agent produced significantly simpler code than our earlier simulated run of its documented workflow.
 
 **Squad** ([github.com/bradygaster/squad](https://github.com/bradygaster/squad), v0.8.25) is a fundamentally different kind of tool. It's a team management layer for GitHub Copilot that creates persistent specialist roles — frontend developer, backend developer, tester, team lead — stored in `.squad/` directories within your project. Each role has custom instructions that Copilot reads when working on tasks assigned to that specialist. Squad is designed for ongoing GitHub Issues and PR workflows: you assign an issue to the "backend" specialist, and Copilot picks up that role's context and constraints.
 
@@ -46,13 +46,13 @@ This matters for interpreting the results. We installed Squad v0.8.25, ran `squa
 
 **What was NOT controlled — and this matters:**
 
-- **Superpowers** ran natively as a fully multi-agent system. Subagents were dispatched, parallel work occurred, two-stage review happened automatically. This is the only orchestrator that operated as designed.
+- **Superpowers** ran natively as a fully multi-agent system. Subagents were dispatched, parallel work occurred, two-stage review happened automatically.
 
-- **DeerFlow 2.0** couldn't run natively. It requires Python 3.12+; the Jetson runs Python 3.10. Its Research → Plan → Code → Review pipeline was simulated by following the documented workflow manually. The results reflect DeerFlow's *methodology* applied by hand, not its runtime behavior.
+- **DeerFlow 2.0** ran natively using the embedded Python client (`DeerFlowClient.chat()`) with GitHub Models API (gpt-4o) as the LLM backend. Python 3.12 was installed via pyenv on the ARM64 Jetson. Each experiment was a single `client.chat()` call with a methodology-specific prompt referencing the spec. DeerFlow orchestrates sub-agents, memory, and tools internally — but the resulting code was notably simpler than our earlier simulated run of its documented workflow (see analysis below).
 
-- **Squad** was installed as the actual CLI (v0.8.25). We ran `squad init` to generate the `.squad/` team structure. But `--agent squad` doesn't register as a Copilot agent for single-prompt generation. The three Squad experiments used single-agent Copilot with Squad's `.squad/` project context files (role definitions, conventions) available in the working directory. No multi-agent orchestration occurred. This is an important distinction: Squad is designed for persistent team roles across GitHub Issues and PR workflows over time. The single-prompt generation task we tested is not its intended use case. The Squad results tell us something about how Copilot performs with structured project context, not about Squad's multi-agent capabilities.
+- **Squad** was installed as the actual CLI (v0.8.25). We ran `squad init` to generate the `.squad/` team structure. But `--agent squad` doesn't register as a Copilot agent for single-prompt generation. The Squad experiments used single-agent Copilot with Squad's `.squad/` project context files (role definitions, conventions) available in the working directory. No multi-agent orchestration occurred. Squad is designed for persistent team roles across GitHub Issues and PR workflows over time, not single-prompt code generation.
 
-Take the DeerFlow and Squad results with appropriate skepticism. The Superpowers results are the most representative of what a native multi-agent orchestration actually produces.
+Superpowers and DeerFlow ran natively as multi-agent systems. Squad remains single-agent Copilot with Squad context — take those results with appropriate skepticism.
 
 **Evaluation:** An LLM judge (not me) scored each implementation 1-5 on five dimensions: Spec Compliance, Correctness, Code Quality, Completeness, and Robustness. I reviewed the scores against the code and agreed with most of them, though the evaluation has its own limitations (discussed below).
 
@@ -60,19 +60,21 @@ Take the DeerFlow and Squad results with appropriate skepticism. The Superpowers
 
 | Implementation | Spec Compliance | Correctness | Code Quality | Completeness | Robustness | **Total** |
 |---|---|---|---|---|---|---|
-| deerflow-gsd | 5 | 4 | 4 | 5 | 4 | **22** |
 | squad-gsd | 5 | 4 | 4 | 4 | 4 | **21** |
 | squad-openspec | 5 | 4 | 4 | 4 | 4 | **21** |
 | superpowers-gsd | 5 | 4 | 4 | 4 | 3 | **20** |
 | superpowers-speckit | 4 | 3 | 5 | 4 | 3 | **19** |
-| deerflow-speckit | 5 | 4 | 4 | 3 | 2 | **18** |
+| deerflow-gsd | 5 | 4 | 3 | 3 | 3 | **18** |
+| deerflow-speckit | 5 | 4 | 3 | 3 | 3 | **18** |
 | superpowers-openspec | 4 | 4 | 4 | 3 | 2 | **17** |
-| deerflow-openspec | 5 | 4 | 3 | 3 | 2 | **17** |
+| deerflow-openspec | 4 | 4 | 4 | 3 | 2 | **17** |
 | squad-speckit | 4 | 3 | 4 | 4 | 2 | **17** |
 
-GSD swept the top three positions. Every orchestrator paired with GSD outscored the same orchestrator paired with either alternative toolkit. deerflow-gsd led at 22/25; squad-gsd and squad-openspec tied for second at 21/25.
+GSD swept the top three positions. Every orchestrator paired with GSD outscored or matched the same orchestrator paired with either alternative toolkit. squad-gsd and squad-openspec tied for first at 21/25; superpowers-gsd came in third at 20.
 
-squad-openspec is the notable mover — it's the only non-GSD implementation to crack the top three, scoring 21/25 with an interactive terminal-size resize loop and smart self-collision handling that accounts for tail movement.
+The biggest surprise: **DeerFlow's native run scored lower than the simulated version.** The simulated deerflow-gsd (which followed DeerFlow's documented Research → Plan → Code → Review pipeline by hand) scored 22/25. The native `DeerFlowClient.chat()` call produced bare-bones 91-line code scoring 18/25. This suggests the documented multi-agent pipeline is more thorough than the actual runtime — at least for this task and model combination.
+
+squad-openspec remains the notable outlier — the only non-GSD implementation to crack the top two, scoring 21/25 with an interactive terminal-size resize loop and smart self-collision handling.
 
 ## Spec Compliance Matrix
 
@@ -143,9 +145,11 @@ Insert head, then conditionally pop tail. No deferred flag, no timing issue. The
 
 This is the most interesting result from the evaluation: the implementation with the *best* architecture score (superpowers-speckit: Code Quality 5/5, five clean OOP classes) had a functional bug. The procedural implementations with no classes got the behavior right.
 
-## The Dead EventBus
+## The Dead EventBus (Simulated DeerFlow)
 
-deerflow-openspec built an event-driven architecture with an `EventBus` class:
+*Note: This section refers to the simulated deerflow-openspec run. The native DeerFlow run produced a clean OOP implementation without an EventBus.*
+
+The simulated deerflow-openspec built an event-driven architecture with an `EventBus` class:
 
 ```python
 class EventBus:
@@ -166,17 +170,17 @@ One redeeming quality: deerflow-openspec is the only implementation that uses `c
 
 | Implementation | LOC | Architecture |
 |---|---|---|
+| deerflow-gsd | 91 | Bare procedural |
+| deerflow-speckit | 110 | Procedural (despite Spec Kit) |
+| deerflow-openspec | 131 | OOP (SnakeGame class) |
 | squad-gsd | 132 | Clean procedural |
-| deerflow-speckit | 152 | State machine + enum |
-| deerflow-openspec | 171 | Event-driven (dead EventBus) |
 | superpowers-gsd | 178 | Procedural with constants |
 | superpowers-openspec | 179 | Functional + dataclass |
 | squad-speckit | 180 | Protocol pattern + Position class |
-| deerflow-gsd | 181 | Module-style functions |
 | squad-openspec | 203 | Dict-state, pure functions |
 | superpowers-speckit | 213 | OOP (5 classes) |
 
-squad-gsd's 132 lines scored 21/25 (tied second). superpowers-speckit's 213 lines scored 19/25 (fifth, with a bug). squad-openspec is the interesting outlier: at 203 lines it tied for second at 21/25, but those extra lines went to useful features (interactive terminal resize loop, smart collision handling, robust rendering) rather than architectural overhead. More code correlated with more architectural ambition, which correlated with more opportunities for bugs and dead code — except when the extra code was defensive rather than structural.
+The native DeerFlow outputs are the shortest — 91 to 131 lines vs the simulated versions' 152-181 lines. DeerFlow's agent runtime produced more direct, less elaborate code than the hand-simulated pipeline. squad-gsd's 132 lines scored 21/25 (tied first). superpowers-speckit's 213 lines scored 19/25 (with a bug). More code continued to correlate with more architectural ambition, which correlated with more opportunities for bugs — except when the extra code was defensive rather than structural.
 
 ## What the Spec Toolkit Controls vs. What the Orchestrator Controls
 
@@ -187,8 +191,8 @@ The spec toolkit shaped *architecture*:
 
 The orchestrator shaped *completeness and robustness*:
 - All three GSD variants checked terminal size. Of the non-GSD variants, only squad-openspec did.
-- deerflow-gsd was the only implementation with a food-spawn safety net (1000 attempts with fallback position)
 - Superpowers consistently produced more polished rendering (manual Unicode box-drawing borders)
+- Native DeerFlow's spec toolkit influence was notably weaker: both GSD and Spec Kit produced nearly identical procedural code. Only OpenSpec prompted DeerFlow to use a class.
 
 The interaction between them is what mattered. GSD's milestone-based approach apparently forced all three orchestrators to handle edge cases (terminal size) that the other toolkits didn't prompt for. The spec explicitly says "Minimum terminal size: 20x10" — GSD treated this as a requirement; Spec Kit and OpenSpec (with the exception of squad-openspec) apparently didn't surface it as a first-class acceptance criterion.
 
@@ -208,23 +212,23 @@ This evaluation has real weaknesses:
 
 **Snake is too easy.** All nine implementations work. The interesting differences are in edge cases (terminal size, grow timing) and code style — not in whether the agents could solve the problem. A harder task (multi-file, networking, database) would produce more differentiation.
 
-**Only one orchestrator ran natively.** DeerFlow was simulated due to Python version requirements. Squad was installed but doesn't function as a multi-agent system for single-prompt generation — the experiments used single-agent Copilot with Squad's context files. Only Superpowers operated as a true multi-agent orchestration. This makes cross-orchestrator comparisons uneven. The DeerFlow and Squad results are more about their *methodology and context* than their *runtime behavior*.
+**Two of three orchestrators ran natively.** Superpowers and DeerFlow both ran as designed. Squad was installed but doesn't function as a multi-agent system for single-prompt generation. Interestingly, DeerFlow's native run scored lower than the simulated version, raising questions about how much of a multi-agent system's value comes from its runtime vs its documented methodology.
 
 **N=1 per combination.** I ran each combination once. LLM outputs are stochastic. Running each combination five times and averaging would be more rigorous. The scores could shift by a few points on re-runs.
 
 **LLM-as-judge.** The evaluation was done by an LLM, not by running a test suite. The grow-timing bug was caught by code inspection, not automated testing. A proper evaluation would include functional tests that exercise each acceptance criterion programmatically.
 
-**Scoring granularity.** 1-5 integer scores across five dimensions give a 5-25 range. The actual spread was 17-22, a 5-point range across 9 implementations. Whether deerflow-gsd at 22 is meaningfully better than squad-gsd at 21 is debatable. The top-4 vs bottom-5 distinction is clearer than individual rankings.
+**Scoring granularity.** 1-5 integer scores across five dimensions give a 5-25 range. The actual spread was 17-21, a 4-point range across 9 implementations. The top-3 vs bottom-6 distinction is clearer than individual rankings.
 
 ## Conclusions
 
 Three data-driven takeaways:
 
-1. **GSD's spec compliance advantage was decisive.** All three GSD variants scored 5/5 on spec compliance and checked terminal size. The toolkit's milestone-based approach — fresh context per phase, explicit verification steps — appears to enforce spec requirements more reliably than scenario-based (Spec Kit) or task-based (OpenSpec) approaches. deerflow-gsd (22/25) led the field; squad-gsd and superpowers-gsd scored 21 and 20 respectively. At least for this spec, GSD's "verify each phase" pattern caught requirements that other toolkits missed.
+1. **GSD's spec compliance advantage was decisive.** All three GSD variants scored 5/5 on spec compliance and checked terminal size. The toolkit's milestone-based approach — fresh context per phase, explicit verification steps — appears to enforce spec requirements more reliably than scenario-based (Spec Kit) or task-based (OpenSpec) approaches. squad-gsd and squad-openspec tied at 21/25; superpowers-gsd scored 20. At least for this spec, GSD's "verify each phase" pattern caught requirements that other toolkits missed.
 
-2. **Architectural ambition correlated negatively with correctness.** The two implementations with the most classes (superpowers-speckit: 5 classes, squad-speckit: Position + Protocol + entities) both had the grow-timing bug (Correctness: 3/5 each). The implementation with the most elaborate architecture (deerflow-openspec: EventBus) had dead code (Code Quality: 3/5). The top four scorers (22, 21, 21, 20) were all procedural or simple functional code. squad-openspec (21/25) is instructive: its 203 lines are longer than average, but the extra code is defensive (try/except, resize loop) rather than structural (classes, protocols).
+2. **Architectural ambition correlated negatively with correctness.** The two implementations with the most classes (superpowers-speckit: 5 classes, squad-speckit: Position + Protocol + entities) both had the grow-timing bug (Correctness: 3/5 each). The top scorers (21, 21, 20) were all procedural or simple functional code. squad-openspec (21/25) is instructive: its 203 lines are longer than average, but the extra code is defensive (try/except, resize loop) rather than structural (classes, protocols).
 
-3. **The spec toolkit shaped the code more than the orchestrator.** Across all three orchestrators, GSD produced procedural code, Spec Kit produced OOP code, and OpenSpec produced functional code. The orchestrator affected quality within those patterns but didn't change the patterns themselves. The one exception: squad-openspec broke the pattern of OpenSpec variants lacking robustness, scoring 4/5 on Robustness with an interactive terminal-size resize loop — the best terminal-size UX of all nine implementations.
+3. **Native runtime ≠ documented methodology.** DeerFlow's native run via `DeerFlowClient.chat()` produced simpler, shorter code (91-131 LOC) than the simulated run following its documented pipeline (152-181 LOC). The simulated deerflow-gsd scored 22/25; the native version scored 18/25. This suggests that a human carefully following a multi-agent workflow's documentation may extract more value than the runtime itself — or that the `chat()` API doesn't fully exercise DeerFlow's multi-agent orchestration. The spec toolkit's influence was also weaker in native runs: GSD and Spec Kit both produced procedural code, while the simulated versions showed clear architectural differentiation.
 
 Whether this generalizes beyond Snake — beyond a well-understood, small, single-file problem — is an open question.
 

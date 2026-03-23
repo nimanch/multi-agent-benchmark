@@ -1,305 +1,560 @@
 <!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#f9f9f9;">
-<div style="max-width:720px;margin:0 auto;padding:40px 20px;font-family:Charter,'Bitstream Charter',Georgia,'Times New Roman',serif;font-size:18px;line-height:1.7;color:#1a1a1a;background:#fff;">
-
-<h1 style="font-size:36px;font-weight:700;line-height:1.2;margin-bottom:8px;">Evaluating 9 AI Agent Combinations on the Same Snake Game</h1>
-<p style="color:#757575;font-size:16px;margin-top:0;">Nishant Manchanda &middot; March 2026</p>
-<hr style="border:none;border-top:1px solid #e0e0e0;margin:32px 0;">
-
+<html><head><meta charset="utf-8"><style>
+body { max-width: 720px; margin: 40px auto; padding: 0 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #292929; line-height: 1.7; font-size: 18px; }
+h1 { font-size: 2em; margin-bottom: 0.2em; }
+h2 { font-size: 1.5em; margin-top: 2em; border-bottom: 1px solid #eee; padding-bottom: 0.3em; }
+h3 { font-size: 1.2em; }
+table { border-collapse: collapse; width: 100%; margin: 1.5em 0; font-size: 0.9em; }
+th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+th { background: #f5f5f5; font-weight: 600; }
+tr:nth-child(even) { background: #fafafa; }
+code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-size: 0.85em; }
+pre { background: #f5f5f5; padding: 16px; border-radius: 6px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+blockquote { border-left: 4px solid #ddd; margin: 1.5em 0; padding: 0.5em 1em; color: #666; }
+img { max-width: 100%; border-radius: 4px; }
+a { color: #1a8917; }
+hr { border: none; border-top: 1px solid #eee; margin: 2em 0; }
+.gif-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.gif-grid img { width: 100%; }
+</style></head><body>
+<h1>Evaluating 9 AI Agent Combinations on the Same Snake Game</h1>
+<p><em>Nishant Manchanda · March 2026</em></p>
+<hr />
 <p>There's a new AI coding agent every week. Most benchmarks compare them on vibes. I wanted something more controlled: give multiple agent combinations the same spec, same language, same machine, and compare the output code systematically.</p>
-
-<p>I picked three multi-agent orchestrators (<a href="https://github.com/obra/superpowers" style="color:#1a8917;text-decoration:none;">Superpowers</a>, <a href="https://github.com/bytedance/deer-flow" style="color:#1a8917;text-decoration:none;">DeerFlow 2.0</a>, <a href="https://github.com/bradygaster/squad" style="color:#1a8917;text-decoration:none;">Squad</a>) and three spec-driven toolkits (<a href="https://github.com/gsd-build/get-shit-done" style="color:#1a8917;text-decoration:none;">GSD</a>, <a href="https://github.com/github/spec-kit" style="color:#1a8917;text-decoration:none;">Spec Kit</a>, <a href="https://github.com/Fission-AI/openspec" style="color:#1a8917;text-decoration:none;">OpenSpec</a>), producing a 3&times;3 matrix of nine implementations. The task: a terminal Snake game in Python curses, from a <a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md" style="color:#1a8917;text-decoration:none;">shared spec</a>.</p>
-
+<p>I picked three multi-agent orchestrators (<a href="https://github.com/obra/superpowers">Superpowers</a>, <a href="https://github.com/bytedance/deer-flow">DeerFlow 2.0</a>, <a href="https://github.com/bradygaster/squad">Squad</a>) and three spec-driven toolkits (<a href="https://github.com/gsd-build/get-shit-done">GSD</a>, <a href="https://github.com/github/spec-kit">Spec Kit</a>, <a href="https://github.com/Fission-AI/openspec">OpenSpec</a>), producing a 3x3 matrix of nine implementations. The task: a terminal Snake game in Python curses, from a <a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md">shared spec</a>.</p>
 <p>Then I had an LLM judge score each implementation across five dimensions.</p>
-
-<p>The results surprised me. The &ldquo;best architecture&rdquo; had a bug. The simplest approach swept the top three spots. And the spec toolkit shaped the code structure more than the orchestrator did.</p>
-
-<p><strong>Repo</strong>: <a href="https://github.com/nimanch/multi-agent-benchmark" style="color:#1a8917;text-decoration:none;">github.com/nimanch/multi-agent-benchmark</a></p>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">The Tools</h2>
-
-<p>Before getting into results, here's what each tool actually does. These aren't interchangeable &mdash; they solve fundamentally different problems.</p>
-
-<h3 style="font-size:22px;font-weight:700;margin-top:36px;margin-bottom:12px;">Orchestrators</h3>
-
-<p><strong><a href="https://github.com/obra/superpowers" style="color:#1a8917;text-decoration:none;">Superpowers</a></strong> (94K+ stars) is a subagent-driven development framework. When you give it a task, it doesn't just generate code &mdash; it dispatches specialized subagents in parallel. A planning agent breaks the problem down. Implementation agents write code concurrently. Then a two-stage review process kicks in: first a spec-compliance check (does the code match the requirements?), then a code-quality review (is the code well-structured?). Superpowers uses a skill-based architecture where agents have defined capabilities and constraints. It ran natively in this experiment &mdash; the only orchestrator that did.</p>
-
-<p><strong><a href="https://github.com/bytedance/deer-flow" style="color:#1a8917;text-decoration:none;">DeerFlow 2.0</a></strong> (ByteDance) follows a Research &rarr; Plan &rarr; Code &rarr; Review pipeline. What distinguishes it is the research phase: before any code is written, a research agent examines best practices, common patterns, and potential pitfalls for the task at hand. DeerFlow also maintains sub-agent memory across tasks within a session. It requires Python 3.12+ and couldn't run natively on our ARM64 test machine. Its workflow was simulated following the documented architecture.</p>
-
-<p><strong><a href="https://github.com/bradygaster/squad" style="color:#1a8917;text-decoration:none;">Squad</a></strong> (v0.8.25) is a fundamentally different kind of tool. It's a team management layer for GitHub Copilot that creates persistent specialist roles &mdash; frontend developer, backend developer, tester, team lead &mdash; stored in <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">.squad/</code> directories within your project. Squad is designed for ongoing GitHub Issues and PR workflows, not single-prompt generation. In this experiment, the Squad runs were effectively single-agent Copilot sessions with access to Squad's context files. No true multi-agent orchestration occurred.</p>
-
-<h3 style="font-size:22px;font-weight:700;margin-top:36px;margin-bottom:12px;">Spec Toolkits</h3>
-
-<p><strong><a href="https://github.com/gsd-build/get-shit-done" style="color:#1a8917;text-decoration:none;">GSD (Get Shit Done)</a></strong> (35K+ stars) takes a milestone/phase approach. Philosophy: ship fast with accountability. You run <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">new-project</code> to scaffold milestones, <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">execute-phase</code> to work through each phase with fresh context windows, then <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">verify-phase</code> to check output. Atomic git commits per phase create a clear audit trail.</p>
-
-<p><strong><a href="https://github.com/github/spec-kit" style="color:#1a8917;text-decoration:none;">Spec Kit</a></strong> (72.7K stars) is GitHub's approach. It generates feature scenarios (given/when/then), acceptance criteria, and architectural specifications &mdash; structured documents designed to be consumed by AI agents. In practice, this led agents to build more elaborate class hierarchies and typed interfaces.</p>
-
-<p><strong><a href="https://github.com/Fission-AI/openspec" style="color:#1a8917;text-decoration:none;">OpenSpec</a></strong> is the most lightweight: <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">plan &rarr; apply &rarr; archive</code>. Minimal ceremony. Task breakdowns in plan.md files give agents freedom in code organization, which showed in the most diverse architectures across orchestrators.</p>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">Methodology</h2>
-
-<p><strong>What was controlled:</strong></p>
-<ul style="padding-left:24px;">
-<li>Identical spec (<a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md" style="color:#1a8917;text-decoration:none;">SNAKE_SPEC.md</a>) &mdash; 16 acceptance criteria</li>
-<li>Same language: Python 3.x with curses (stdlib only)</li>
-<li>Same machine: NVIDIA Jetson ARM64, 8GB RAM, Ubuntu</li>
-<li>Single-file implementations, zero manual interventions</li>
+<p>The results surprised me. The "best architecture" had a bug. The simplest approach swept the top three spots. And the spec toolkit shaped the code structure more than the orchestrator did.</p>
+<p><strong>Repo</strong>: <a href="https://github.com/nimanch/multi-agent-benchmark">github.com/nimanch/multi-agent-benchmark</a></p>
+<h2>The Tools</h2>
+<p>Before getting into results, here's what each tool actually does. These aren't interchangeable — they solve fundamentally different problems.</p>
+<h3>Orchestrators</h3>
+<p><strong>Superpowers</strong> (<a href="https://github.com/obra/superpowers">github.com/obra/superpowers</a>, 94K+ stars) is a subagent-driven development framework. When you give it a task, it doesn't just generate code — it dispatches specialized subagents in parallel. A planning agent breaks the problem down. Implementation agents write code concurrently. Then a two-stage review process kicks in: first a spec-compliance check (does the code match the requirements?), then a code-quality review (is the code well-structured?). Superpowers uses a skill-based architecture where agents have defined capabilities and constraints. It ran natively in this experiment — the only orchestrator that did.</p>
+<p><strong>DeerFlow 2.0</strong> (<a href="https://github.com/bytedance/deer-flow">github.com/bytedance/deer-flow</a>, ByteDance) follows a Research → Plan → Code → Review pipeline. What distinguishes it is the research phase: before any code is written, a research agent examines best practices, common patterns, and potential pitfalls for the task at hand. This front-loaded research gets passed to the coding agent as context. DeerFlow also maintains sub-agent memory across tasks within a session, so later tasks can reference decisions made in earlier ones. DeerFlow ran natively using the embedded Python client (<code>DeerFlowClient</code>) with GitHub Models API (gpt-4o) as the LLM backend — after installing Python 3.12 via pyenv on the ARM64 test machine. The results were illuminating: the native agent produced significantly simpler code than our earlier simulated run of its documented workflow.</p>
+<p><strong>Squad</strong> (<a href="https://github.com/bradygaster/squad">github.com/bradygaster/squad</a>, v0.8.25) is a fundamentally different kind of tool. It's a team management layer for GitHub Copilot that creates persistent specialist roles — frontend developer, backend developer, tester, team lead — stored in <code>.squad/</code> directories within your project. Each role has custom instructions that Copilot reads when working on tasks assigned to that specialist. Squad is designed for ongoing GitHub Issues and PR workflows: you assign an issue to the "backend" specialist, and Copilot picks up that role's context and constraints.</p>
+<p>This matters for interpreting the results. We installed Squad v0.8.25, ran <code>squad init</code> to generate the team structure, but discovered that <code>--agent squad</code> doesn't register as a Copilot agent in the way you'd expect. The Squad experiments in this benchmark were effectively single-agent Copilot sessions where Copilot had access to Squad's <code>.squad/</code> context files (role definitions, project conventions). No multi-agent orchestration occurred. Squad is built for persistent team coordination across many PRs over time, not single-prompt code generation from a spec. Comparing it head-to-head with Superpowers or DeerFlow as an "orchestrator" is somewhat apples-to-oranges.</p>
+<h3>Spec Toolkits</h3>
+<p><strong>GSD (Get Shit Done)</strong> (<a href="https://github.com/gsd-build/get-shit-done">github.com/gsd-build/get-shit-done</a>, 35K+ stars) takes a milestone/phase approach to project management for AI agents. Its philosophy is shipping fast with accountability. You run <code>new-project</code> to scaffold milestones from a spec, then <code>execute-phase</code> to have an agent work through each phase, then <code>verify-phase</code> to check the output. Each phase gets a fresh context window, which prevents context pollution across tasks. GSD enforces atomic git commits per phase, creating a clear audit trail. The fresh-context-per-phase pattern may explain why GSD variants consistently handled edge cases like terminal size checks — each phase is independently verified against the spec.</p>
+<p><strong>Spec Kit</strong> (<a href="https://github.com/github/spec-kit">github.com/github/spec-kit</a>, 72.7K stars) is GitHub's approach to spec-driven development. It generates structured requirement documents: feature scenarios (given/when/then), acceptance criteria, and architectural specifications. These documents are designed to be consumed by AI agents as context. Spec Kit emphasizes separation of concerns — the spec describes <em>what</em>, not <em>how</em> — and produces documents that read like detailed product requirements. In practice, this led agents to build more elaborate class hierarchies and typed interfaces, mirroring the structured nature of the specs themselves.</p>
+<p><strong>OpenSpec</strong> (<a href="https://github.com/Fission-AI/openspec">github.com/Fission-AI/openspec</a>) is the most lightweight of the three. Its workflow is <code>plan → apply → archive</code>: generate a plan.md with task breakdowns, apply the plan to produce code, then archive the completed plan. Minimal ceremony, minimal scaffolding. The task breakdowns in plan.md files tend to be flat lists rather than hierarchical milestones, which gives agents more freedom in how they organize the code. This freedom showed in the results — OpenSpec variants had the most diverse architectures across the three orchestrators.</p>
+<h2>Methodology</h2>
+<p><strong>What was controlled:</strong>
+- Identical spec (<a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md">SNAKE_SPEC.md</a>) — 16 acceptance criteria covering movement, collision, scoring, display, and restart
+- Same language: Python 3.x with curses (stdlib only)
+- Same machine: NVIDIA Jetson ARM64, 8GB RAM, Ubuntu
+- Single-file implementations, zero manual interventions on any of the nine</p>
+<p><strong>What was NOT controlled — and this matters:</strong></p>
+<ul>
+<li>
+<p><strong>Superpowers</strong> ran natively as a fully multi-agent system. Subagents were dispatched, parallel work occurred, two-stage review happened automatically.</p>
+</li>
+<li>
+<p><strong>DeerFlow 2.0</strong> ran natively using the embedded Python client (<code>DeerFlowClient.chat()</code>) with GitHub Models API (gpt-4o) as the LLM backend. Python 3.12 was installed via pyenv on the ARM64 Jetson. Each experiment was a single <code>client.chat()</code> call with a methodology-specific prompt referencing the spec. DeerFlow orchestrates sub-agents, memory, and tools internally — but the resulting code was notably simpler than our earlier simulated run of its documented workflow (see analysis below).</p>
+</li>
+<li>
+<p><strong>Squad</strong> was installed as the actual CLI (v0.8.25). We ran <code>squad init</code> to generate the <code>.squad/</code> team structure. But <code>--agent squad</code> doesn't register as a Copilot agent for single-prompt generation. The Squad experiments used single-agent Copilot with Squad's <code>.squad/</code> project context files (role definitions, conventions) available in the working directory. No multi-agent orchestration occurred. Squad is designed for persistent team roles across GitHub Issues and PR workflows over time, not single-prompt code generation.</p>
+</li>
 </ul>
-
-<p><strong>What was NOT controlled &mdash; and this matters:</strong></p>
-<ul style="padding-left:24px;">
-<li><strong>Superpowers</strong> ran natively as a fully multi-agent system. The only orchestrator that operated as designed.</li>
-<li><strong>DeerFlow 2.0</strong> couldn't run natively (Python 3.12+ required). Its pipeline was simulated manually.</li>
-<li><strong>Squad</strong> was installed (v0.8.25), <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">squad init</code> ran, but <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">--agent squad</code> doesn't register as a Copilot agent. The experiments used single-agent Copilot with Squad's <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">.squad/</code> context files. Squad is designed for persistent team roles across PR workflows, not single-prompt generation.</li>
-</ul>
-
-<p><strong>Evaluation:</strong> An LLM judge scored each implementation 1&ndash;5 on five dimensions: Spec Compliance, Correctness, Code Quality, Completeness, and Robustness.</p>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">The Scores</h2>
-
-<table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:15px;">
+<p>Superpowers and DeerFlow ran natively as multi-agent systems. Squad remains single-agent Copilot with Squad context — take those results with appropriate skepticism.</p>
+<p><strong>Evaluation:</strong> An LLM judge (not me) scored each implementation 1-5 on five dimensions: Spec Compliance, Correctness, Code Quality, Completeness, and Robustness. I reviewed the scores against the code and agreed with most of them, though the evaluation has its own limitations (discussed below).</p>
+<h2>The Scores</h2>
+<table>
 <thead>
-<tr style="background:#1a1a1a;color:#fff;">
-<th style="padding:10px 12px;text-align:left;">Implementation</th>
-<th style="padding:10px 8px;text-align:center;">Spec</th>
-<th style="padding:10px 8px;text-align:center;">Correct</th>
-<th style="padding:10px 8px;text-align:center;">Quality</th>
-<th style="padding:10px 8px;text-align:center;">Complete</th>
-<th style="padding:10px 8px;text-align:center;">Robust</th>
-<th style="padding:10px 8px;text-align:center;font-weight:700;">Total</th>
+<tr>
+<th>Implementation</th>
+<th>Spec Compliance</th>
+<th>Correctness</th>
+<th>Code Quality</th>
+<th>Completeness</th>
+<th>Robustness</th>
+<th><strong>Total</strong></th>
 </tr>
 </thead>
 <tbody>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">deerflow-gsd</td><td style="padding:8px;text-align:center;">5</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">5</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;font-weight:700;">22</td></tr>
-<tr><td style="padding:8px 12px;">squad-gsd</td><td style="padding:8px;text-align:center;">5</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;font-weight:700;">21</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">squad-openspec</td><td style="padding:8px;text-align:center;">5</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;font-weight:700;">21</td></tr>
-<tr><td style="padding:8px 12px;">superpowers-gsd</td><td style="padding:8px;text-align:center;">5</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">3</td><td style="padding:8px;text-align:center;font-weight:700;">20</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">superpowers-speckit</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">3</td><td style="padding:8px;text-align:center;">5</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">3</td><td style="padding:8px;text-align:center;font-weight:700;">19</td></tr>
-<tr><td style="padding:8px 12px;">deerflow-speckit</td><td style="padding:8px;text-align:center;">5</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">3</td><td style="padding:8px;text-align:center;">2</td><td style="padding:8px;text-align:center;font-weight:700;">18</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">superpowers-openspec</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">3</td><td style="padding:8px;text-align:center;">2</td><td style="padding:8px;text-align:center;font-weight:700;">17</td></tr>
-<tr><td style="padding:8px 12px;">deerflow-openspec</td><td style="padding:8px;text-align:center;">5</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">3</td><td style="padding:8px;text-align:center;">3</td><td style="padding:8px;text-align:center;">2</td><td style="padding:8px;text-align:center;font-weight:700;">17</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">squad-speckit</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">3</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">4</td><td style="padding:8px;text-align:center;">2</td><td style="padding:8px;text-align:center;font-weight:700;">17</td></tr>
+<tr>
+<td>squad-gsd</td>
+<td>5</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td><strong>21</strong></td>
+</tr>
+<tr>
+<td>squad-openspec</td>
+<td>5</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td><strong>21</strong></td>
+</tr>
+<tr>
+<td>superpowers-gsd</td>
+<td>5</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>3</td>
+<td><strong>20</strong></td>
+</tr>
+<tr>
+<td>superpowers-speckit</td>
+<td>4</td>
+<td>3</td>
+<td>5</td>
+<td>4</td>
+<td>3</td>
+<td><strong>19</strong></td>
+</tr>
+<tr>
+<td>deerflow-gsd</td>
+<td>5</td>
+<td>4</td>
+<td>3</td>
+<td>3</td>
+<td>3</td>
+<td><strong>18</strong></td>
+</tr>
+<tr>
+<td>deerflow-speckit</td>
+<td>5</td>
+<td>4</td>
+<td>3</td>
+<td>3</td>
+<td>3</td>
+<td><strong>18</strong></td>
+</tr>
+<tr>
+<td>superpowers-openspec</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>3</td>
+<td>2</td>
+<td><strong>17</strong></td>
+</tr>
+<tr>
+<td>deerflow-openspec</td>
+<td>4</td>
+<td>4</td>
+<td>4</td>
+<td>3</td>
+<td>2</td>
+<td><strong>17</strong></td>
+</tr>
+<tr>
+<td>squad-speckit</td>
+<td>4</td>
+<td>3</td>
+<td>4</td>
+<td>4</td>
+<td>2</td>
+<td><strong>17</strong></td>
+</tr>
 </tbody>
 </table>
-
-<p>GSD swept the top three positions. Every orchestrator paired with GSD outscored the same orchestrator paired with either alternative toolkit. deerflow-gsd led at 22/25; squad-gsd and squad-openspec tied for second at 21/25.</p>
-
-<p>squad-openspec is the notable mover &mdash; the only non-GSD implementation to crack the top three, scoring 21/25 with an interactive terminal-size resize loop and smart self-collision handling.</p>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">Spec Compliance Matrix</h2>
-
-<table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:13px;">
+<p>GSD swept the top three positions. Every orchestrator paired with GSD outscored or matched the same orchestrator paired with either alternative toolkit. squad-gsd and squad-openspec tied for first at 21/25; superpowers-gsd came in third at 20.</p>
+<p>The biggest surprise: <strong>DeerFlow's native run scored lower than the simulated version.</strong> The simulated deerflow-gsd (which followed DeerFlow's documented Research → Plan → Code → Review pipeline by hand) scored 22/25. The native <code>DeerFlowClient.chat()</code> call produced bare-bones 91-line code scoring 18/25. This suggests the documented multi-agent pipeline is more thorough than the actual runtime — at least for this task and model combination.</p>
+<p>squad-openspec remains the notable outlier — the only non-GSD implementation to crack the top two, scoring 21/25 with an interactive terminal-size resize loop and smart self-collision handling.</p>
+<h2>Spec Compliance Matrix</h2>
+<p>Not all "pass" results are equal. The LLM judge checked 16 specific requirements:</p>
+<table>
 <thead>
-<tr style="background:#1a1a1a;color:#fff;">
-<th style="padding:8px 6px;text-align:left;">Requirement</th>
-<th style="padding:8px 4px;text-align:center;">SP-GSD</th>
-<th style="padding:8px 4px;text-align:center;">SP-SK</th>
-<th style="padding:8px 4px;text-align:center;">SP-OS</th>
-<th style="padding:8px 4px;text-align:center;">DF-GSD</th>
-<th style="padding:8px 4px;text-align:center;">DF-SK</th>
-<th style="padding:8px 4px;text-align:center;">DF-OS</th>
-<th style="padding:8px 4px;text-align:center;">SQ-GSD</th>
-<th style="padding:8px 4px;text-align:center;">SQ-SK</th>
-<th style="padding:8px 4px;text-align:center;">SQ-OS</th>
+<tr>
+<th>Requirement</th>
+<th>SP-GSD</th>
+<th>SP-SK</th>
+<th>SP-OS</th>
+<th>DF-GSD</th>
+<th>DF-SK</th>
+<th>DF-OS</th>
+<th>SQ-GSD</th>
+<th>SQ-SK</th>
+<th>SQ-OS</th>
 </tr>
 </thead>
 <tbody>
-<tr style="background:#f7f7f7;"><td style="padding:6px;">Continuous movement</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr><td style="padding:6px;">Arrow key controls</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:6px;">No reverse direction</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr><td style="padding:6px;">Random food spawn</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:6px;">Food as <code>*</code></td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr><td style="padding:6px;">Head=O, Body=&#9608;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:6px;">Score +10, displayed</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr><td style="padding:6px;font-weight:700;">Snake grows on eat</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9888;&#65039;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9888;&#65039;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:6px;">Wall collision = death</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr><td style="padding:6px;">Self collision = death</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:6px;">Border around play area</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr><td style="padding:6px;">Game over screen</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:6px;">Final score shown</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr><td style="padding:6px;">q=quit, r=restart</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:6px;">100ms tick</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9989;</td></tr>
-<tr><td style="padding:6px;font-weight:700;">Min terminal 20&times;10</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#9888;&#65039;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td><td style="text-align:center;">&#10060;</td><td style="text-align:center;">&#9989;</td></tr>
+<tr>
+<td>Continuous movement</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Arrow key controls</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>No reverse direction</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Random food spawn</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Food as <code>*</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Head=<code>O</code>, Body=<code>█</code></td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Score +10, displayed</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Snake grows on eat</strong></td>
+<td>✅</td>
+<td>⚠️</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>⚠️</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Wall collision = death</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Self collision = death</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Border around play area</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Game over screen</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Final score shown</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>q=quit, r=restart</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>100ms tick</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>Min terminal 20x10</strong></td>
+<td>✅</td>
+<td>⚠️</td>
+<td>❌</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
 </tbody>
 </table>
-
 <p>Two things jump out:</p>
-<ol style="padding-left:24px;">
-<li><strong>Only 4 of 9 implementations checked minimum terminal size</strong> &mdash; three GSD variants plus squad-openspec. This is a clear spec requirement that 5 implementations simply ignored.</li>
-<li><strong>Two implementations (superpowers-speckit, squad-speckit) have a grow-timing bug</strong> where the snake doesn't visually grow until one frame after eating.</li>
+<ol>
+<li><strong>Only 4 of 9 implementations checked minimum terminal size</strong> — three GSD variants plus squad-openspec. This is a clear spec requirement that 5 implementations simply ignored.</li>
+<li><strong>Two implementations (superpowers-speckit, squad-speckit) have a grow-timing bug</strong> where the snake doesn't visually grow until one frame after eating. More on this below.</li>
 </ol>
+<h2>The Grow-Timing Bug</h2>
+<p>The spec says "the snake grows by one segment each time it eats food." Two implementations (superpowers-speckit and squad-speckit) get this subtly wrong due to an architectural choice.</p>
+<p>Here's the pattern that causes the bug — from superpowers-speckit:</p>
+<pre class="codehilite"><code class="language-python"># Game loop (simplified):
+snake.move()                    # advance first
+if snake.head == food.position:
+    snake.grow()                # sets grow_pending = True
+    food.respawn(...)
 
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">The Grow-Timing Bug</h2>
+# Inside Snake.move():
+def move(self):
+    new_head = (self.head[0] + dy, self.head[1] + dx)
+    self.body.insert(0, new_head)
+    if not self.grow_pending:   # checked BEFORE grow() is called this tick
+        self.body.pop()
+    else:
+        self.grow_pending = False
+</code></pre>
 
-<p>The spec says &ldquo;the snake grows by one segment each time it eats food.&rdquo; Two implementations get this subtly wrong due to an architectural choice.</p>
+<p>The problem: <code>move()</code> executes before the food check. So when the snake eats food, <code>grow_pending</code> is still <code>False</code> during that tick's <code>move()</code>. The tail gets popped. <code>grow()</code> then sets <code>grow_pending = True</code>, which takes effect on the <em>next</em> tick. The snake still grows by exactly one segment — but there's a one-frame visual glitch where the food disappears before the snake visually extends.</p>
+<p>Compare with the pattern used by 7 of 9 implementations (here from deerflow-gsd):</p>
+<pre class="codehilite"><code class="language-python">def move_snake(snake, direction, food):
+    new_head = (head_y + dy, head_x + dx)
+    new_snake = [new_head] + snake[:]
+    ate = new_head == food
+    if not ate:
+        new_snake.pop()         # grow decision is immediate
+    return new_snake, ate
+</code></pre>
 
-<p>Here's the pattern that causes the bug &mdash; from superpowers-speckit:</p>
+<p>Insert head, then conditionally pop tail. No deferred flag, no timing issue. The simpler pattern is the correct one.</p>
+<p>This is the most interesting result from the evaluation: the implementation with the <em>best</em> architecture score (superpowers-speckit: Code Quality 5/5, five clean OOP classes) had a functional bug. The procedural implementations with no classes got the behavior right.</p>
+<h2>The Dead EventBus (Simulated DeerFlow)</h2>
+<p><em>Note: This section refers to the simulated deerflow-openspec run. The native DeerFlow run produced a clean OOP implementation without an EventBus.</em></p>
+<p>The simulated deerflow-openspec built an event-driven architecture with an <code>EventBus</code> class:</p>
+<pre class="codehilite"><code class="language-python">class EventBus:
+    def on(self, event, handler):
+        self._handlers.setdefault(event, []).append(handler)
+    def emit(self, event, **kwargs):
+        for h in self._handlers.get(event, []):
+            h(**kwargs)
+</code></pre>
 
-<div style="background:#1e1e2e;border-radius:8px;padding:16px 20px;margin:20px 0;overflow-x:auto;">
-<pre style="margin:0;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:14px;line-height:1.5;color:#cdd6f4;"><span style="color:#6c7086;"># Game loop (simplified):</span>
-<span style="color:#cdd6f4;">snake.</span><span style="color:#89b4fa;">move</span><span style="color:#cdd6f4;">()</span>                    <span style="color:#6c7086;"># advance first</span>
-<span style="color:#cba6f7;">if</span> <span style="color:#cdd6f4;">snake.head == food.position:</span>
-    <span style="color:#cdd6f4;">snake.</span><span style="color:#89b4fa;">grow</span><span style="color:#cdd6f4;">()</span>                <span style="color:#6c7086;"># sets grow_pending = True</span>
-    <span style="color:#cdd6f4;">food.</span><span style="color:#89b4fa;">respawn</span><span style="color:#cdd6f4;">(...)</span>
-
-<span style="color:#6c7086;"># Inside Snake.move():</span>
-<span style="color:#cba6f7;">def</span> <span style="color:#89b4fa;">move</span><span style="color:#cdd6f4;">(self):</span>
-    <span style="color:#cdd6f4;">new_head = (self.head[</span><span style="color:#fab387;">0</span><span style="color:#cdd6f4;">] + dy, self.head[</span><span style="color:#fab387;">1</span><span style="color:#cdd6f4;">] + dx)</span>
-    <span style="color:#cdd6f4;">self.body.</span><span style="color:#89b4fa;">insert</span><span style="color:#cdd6f4;">(</span><span style="color:#fab387;">0</span><span style="color:#cdd6f4;">, new_head)</span>
-    <span style="color:#cba6f7;">if not</span> <span style="color:#cdd6f4;">self.grow_pending:</span>   <span style="color:#6c7086;"># checked BEFORE grow() is called</span>
-        <span style="color:#cdd6f4;">self.body.</span><span style="color:#89b4fa;">pop</span><span style="color:#cdd6f4;">()</span>
-    <span style="color:#cba6f7;">else</span><span style="color:#cdd6f4;">:</span>
-        <span style="color:#cdd6f4;">self.grow_pending = </span><span style="color:#fab387;">False</span></pre>
-</div>
-
-<p>Compare with the correct pattern used by 7 of 9 implementations:</p>
-
-<div style="background:#1e1e2e;border-radius:8px;padding:16px 20px;margin:20px 0;overflow-x:auto;">
-<pre style="margin:0;font-family:'SF Mono',Menlo,Monaco,monospace;font-size:14px;line-height:1.5;color:#cdd6f4;"><span style="color:#cba6f7;">def</span> <span style="color:#89b4fa;">move_snake</span><span style="color:#cdd6f4;">(snake, direction, food):</span>
-    <span style="color:#cdd6f4;">new_head = (head_y + dy, head_x + dx)</span>
-    <span style="color:#cdd6f4;">new_snake = [new_head] + snake[:]</span>
-    <span style="color:#cdd6f4;">ate = new_head == food</span>
-    <span style="color:#cba6f7;">if not</span> <span style="color:#cdd6f4;">ate:</span>
-        <span style="color:#cdd6f4;">new_snake.</span><span style="color:#89b4fa;">pop</span><span style="color:#cdd6f4;">()</span>         <span style="color:#6c7086;"># grow decision is immediate</span>
-    <span style="color:#cba6f7;">return</span> <span style="color:#cdd6f4;">new_snake, ate</span></pre>
-</div>
-
-<p>The implementation with the <em>best</em> architecture score (superpowers-speckit: Code Quality 5/5, five clean OOP classes) had a functional bug. The procedural implementations with no classes got the behavior right.</p>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">The Dead EventBus</h2>
-
-<p>deerflow-openspec built an event-driven architecture with an <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">EventBus</code> class. Events are emitted throughout the game &mdash; <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">EVT_MOVE</code>, <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">EVT_EAT</code>, <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">EVT_DIE</code>. But <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">bus.on()</code> is never called anywhere. Zero subscribers. The events fire into the void.</p>
-
-<p>The game works fine &mdash; the EventBus just doesn't do anything. It's the code equivalent of installing a fire alarm system and never connecting the sirens.</p>
-
-<p>One redeeming quality: deerflow-openspec is the only implementation that uses <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">collections.deque</code> for the snake body, giving O(1) head insertion vs O(n) for list <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">insert(0, ...)</code>.</p>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">Lines of Code</h2>
-
-<table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:15px;">
+<p>Events are emitted throughout the game — <code>EVT_MOVE</code>, <code>EVT_EAT</code>, <code>EVT_DIE</code>. But <code>bus.on()</code> is never called anywhere. Zero subscribers. The events fire into the void.</p>
+<p>The evaluator called this "architecture astronautics," which is fair. The game works fine — the EventBus just doesn't do anything. It's the code equivalent of installing a fire alarm system and never connecting the sirens.</p>
+<p>One redeeming quality: deerflow-openspec is the only implementation that uses <code>collections.deque</code> for the snake body, giving O(1) head insertion vs O(n) for list <code>insert(0, ...)</code>. For a 20x10 terminal it doesn't matter, but it's the technically correct data structure.</p>
+<h2>Lines of Code</h2>
+<table>
 <thead>
-<tr style="background:#1a1a1a;color:#fff;">
-<th style="padding:10px 12px;text-align:left;">Implementation</th>
-<th style="padding:10px 8px;text-align:center;">LOC</th>
-<th style="padding:10px 12px;text-align:left;">Architecture</th>
+<tr>
+<th>Implementation</th>
+<th>LOC</th>
+<th>Architecture</th>
 </tr>
 </thead>
 <tbody>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">squad-gsd</td><td style="padding:8px;text-align:center;">132</td><td style="padding:8px 12px;">Clean procedural</td></tr>
-<tr><td style="padding:8px 12px;">deerflow-speckit</td><td style="padding:8px;text-align:center;">152</td><td style="padding:8px 12px;">State machine + enum</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">deerflow-openspec</td><td style="padding:8px;text-align:center;">171</td><td style="padding:8px 12px;">Event-driven (dead EventBus)</td></tr>
-<tr><td style="padding:8px 12px;">superpowers-gsd</td><td style="padding:8px;text-align:center;">178</td><td style="padding:8px 12px;">Procedural with constants</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">superpowers-openspec</td><td style="padding:8px;text-align:center;">179</td><td style="padding:8px 12px;">Functional + dataclass</td></tr>
-<tr><td style="padding:8px 12px;">squad-speckit</td><td style="padding:8px;text-align:center;">180</td><td style="padding:8px 12px;">Protocol pattern + Position class</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">deerflow-gsd</td><td style="padding:8px;text-align:center;">181</td><td style="padding:8px 12px;">Module-style functions</td></tr>
-<tr><td style="padding:8px 12px;">squad-openspec</td><td style="padding:8px;text-align:center;">203</td><td style="padding:8px 12px;">Dict-state, pure functions</td></tr>
-<tr style="background:#f7f7f7;"><td style="padding:8px 12px;">superpowers-speckit</td><td style="padding:8px;text-align:center;">213</td><td style="padding:8px 12px;">OOP (5 classes)</td></tr>
+<tr>
+<td>deerflow-gsd</td>
+<td>91</td>
+<td>Bare procedural</td>
+</tr>
+<tr>
+<td>deerflow-speckit</td>
+<td>110</td>
+<td>Procedural (despite Spec Kit)</td>
+</tr>
+<tr>
+<td>deerflow-openspec</td>
+<td>131</td>
+<td>OOP (SnakeGame class)</td>
+</tr>
+<tr>
+<td>squad-gsd</td>
+<td>132</td>
+<td>Clean procedural</td>
+</tr>
+<tr>
+<td>superpowers-gsd</td>
+<td>178</td>
+<td>Procedural with constants</td>
+</tr>
+<tr>
+<td>superpowers-openspec</td>
+<td>179</td>
+<td>Functional + dataclass</td>
+</tr>
+<tr>
+<td>squad-speckit</td>
+<td>180</td>
+<td>Protocol pattern + Position class</td>
+</tr>
+<tr>
+<td>squad-openspec</td>
+<td>203</td>
+<td>Dict-state, pure functions</td>
+</tr>
+<tr>
+<td>superpowers-speckit</td>
+<td>213</td>
+<td>OOP (5 classes)</td>
+</tr>
 </tbody>
 </table>
-
-<p>squad-gsd's 132 lines scored 21/25 (tied second). superpowers-speckit's 213 lines scored 19/25 (fifth, with a bug). squad-openspec at 203 lines also scored 21/25, but its extra lines went to defensive features (interactive resize loop, robust rendering) rather than architectural overhead.</p>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">What the Spec Toolkit Controls vs. What the Orchestrator Controls</h2>
-
-<p>The spec toolkit shaped <em>architecture</em>:</p>
-<ul style="padding-left:24px;">
-<li><strong>GSD</strong> &rarr; procedural, pragmatic, &ldquo;just make it work&rdquo;</li>
-<li><strong>Spec Kit</strong> &rarr; OOP, typed, separated concerns, elaborate class hierarchies</li>
-<li><strong>OpenSpec</strong> &rarr; functional, state-as-data, testable pure functions</li>
-</ul>
-
-<p>The orchestrator shaped <em>completeness and robustness</em>:</p>
-<ul style="padding-left:24px;">
-<li>All three GSD variants checked terminal size. Of non-GSD, only squad-openspec did.</li>
-<li>deerflow-gsd was the only implementation with a food-spawn safety net (1000 attempts with fallback)</li>
-<li>Superpowers consistently produced more polished rendering (manual Unicode box-drawing borders)</li>
-</ul>
-
-<p>GSD's milestone-based approach forced all three orchestrators to handle edge cases that other toolkits didn't prompt for. The spec says &ldquo;Minimum terminal size: 20x10&rdquo; &mdash; GSD treated this as a requirement; Spec Kit and OpenSpec (except squad-openspec) didn't surface it as a first-class criterion.</p>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">The Demos</h2>
-
+<p>The native DeerFlow outputs are the shortest — 91 to 131 lines vs the simulated versions' 152-181 lines. DeerFlow's agent runtime produced more direct, less elaborate code than the hand-simulated pipeline. squad-gsd's 132 lines scored 21/25 (tied first). superpowers-speckit's 213 lines scored 19/25 (with a bug). More code continued to correlate with more architectural ambition, which correlated with more opportunities for bugs — except when the extra code was defensive rather than structural.</p>
+<h2>What the Spec Toolkit Controls vs. What the Orchestrator Controls</h2>
+<p>The spec toolkit shaped <em>architecture</em>:
+- <strong>GSD</strong> → procedural, pragmatic, "just make it work"
+- <strong>Spec Kit</strong> → OOP, typed, separated concerns, more elaborate class hierarchies
+- <strong>OpenSpec</strong> → functional, state-as-data, testable pure functions</p>
+<p>The orchestrator shaped <em>completeness and robustness</em>:
+- All three GSD variants checked terminal size. Of the non-GSD variants, only squad-openspec did.
+- Superpowers consistently produced more polished rendering (manual Unicode box-drawing borders)
+- Native DeerFlow's spec toolkit influence was notably weaker: both GSD and Spec Kit produced nearly identical procedural code. Only OpenSpec prompted DeerFlow to use a class.</p>
+<p>The interaction between them is what mattered. GSD's milestone-based approach apparently forced all three orchestrators to handle edge cases (terminal size) that the other toolkits didn't prompt for. The spec explicitly says "Minimum terminal size: 20x10" — GSD treated this as a requirement; Spec Kit and OpenSpec (with the exception of squad-openspec) apparently didn't surface it as a first-class acceptance criterion.</p>
+<h2>The Demos</h2>
 <p>All nine games running:</p>
-
-<table style="width:100%;border-collapse:collapse;margin:24px 0;">
+<table>
 <thead>
 <tr>
-<th style="padding:8px;"></th>
-<th style="padding:8px;text-align:center;font-size:14px;font-weight:700;">GSD</th>
-<th style="padding:8px;text-align:center;font-size:14px;font-weight:700;">Spec Kit</th>
-<th style="padding:8px;text-align:center;font-size:14px;font-weight:700;">OpenSpec</th>
+<th></th>
+<th>GSD</th>
+<th>Spec Kit</th>
+<th>OpenSpec</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td style="padding:8px;font-weight:700;font-size:14px;">Superpowers</td>
-<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-gsd.gif" alt="superpowers-gsd" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
-<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-speckit.gif" alt="superpowers-speckit" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
-<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-openspec.gif" alt="superpowers-openspec" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+<td><strong>Superpowers</strong></td>
+<td><img alt="superpowers-gsd" src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-gsd.gif" /></td>
+<td><img alt="superpowers-speckit" src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-speckit.gif" /></td>
+<td><img alt="superpowers-openspec" src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-openspec.gif" /></td>
 </tr>
 <tr>
-<td style="padding:8px;font-weight:700;font-size:14px;">DeerFlow</td>
-<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-gsd.gif" alt="deerflow-gsd" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
-<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-speckit.gif" alt="deerflow-speckit" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
-<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-openspec.gif" alt="deerflow-openspec" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+<td><strong>DeerFlow</strong></td>
+<td><img alt="deerflow-gsd" src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-gsd.gif" /></td>
+<td><img alt="deerflow-speckit" src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-speckit.gif" /></td>
+<td><img alt="deerflow-openspec" src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-openspec.gif" /></td>
 </tr>
 <tr>
-<td style="padding:8px;font-weight:700;font-size:14px;">Squad</td>
-<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-gsd.gif" alt="squad-gsd" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
-<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-speckit.gif" alt="squad-speckit" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
-<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-openspec.gif" alt="squad-openspec" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+<td><strong>Squad</strong></td>
+<td><img alt="squad-gsd" src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-gsd.gif" /></td>
+<td><img alt="squad-speckit" src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-speckit.gif" /></td>
+<td><img alt="squad-openspec" src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-openspec.gif" /></td>
 </tr>
 </tbody>
 </table>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">Limitations</h2>
-
-<p><strong>Snake is too easy.</strong> All nine implementations work. The interesting differences are in edge cases and code style &mdash; not in whether the agents could solve the problem.</p>
-
-<p><strong>Only one orchestrator ran natively.</strong> DeerFlow was simulated (Python 3.12+ requirement). Squad was installed but doesn't function as a multi-agent system for single-prompt generation &mdash; the experiments used single-agent Copilot with Squad's context files. Only Superpowers operated as true multi-agent orchestration.</p>
-
-<p><strong>N=1 per combination.</strong> Each combination ran once. LLM outputs are stochastic. Running each five times and averaging would be more rigorous.</p>
-
-<p><strong>LLM-as-judge.</strong> The evaluation was done by an LLM, not a test suite. The grow-timing bug was caught by code inspection, not automated testing.</p>
-
-<p><strong>Scoring granularity.</strong> The actual spread was 17&ndash;22, a 5-point range across 9 implementations. The top-4 vs bottom-5 distinction is clearer than individual rankings.</p>
-
-<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;">Conclusions</h2>
-
+<h2>Limitations</h2>
+<p>This evaluation has real weaknesses:</p>
+<p><strong>Snake is too easy.</strong> All nine implementations work. The interesting differences are in edge cases (terminal size, grow timing) and code style — not in whether the agents could solve the problem. A harder task (multi-file, networking, database) would produce more differentiation.</p>
+<p><strong>Two of three orchestrators ran natively.</strong> Superpowers and DeerFlow both ran as designed. Squad was installed but doesn't function as a multi-agent system for single-prompt generation. Interestingly, DeerFlow's native run scored lower than the simulated version, raising questions about how much of a multi-agent system's value comes from its runtime vs its documented methodology.</p>
+<p><strong>N=1 per combination.</strong> I ran each combination once. LLM outputs are stochastic. Running each combination five times and averaging would be more rigorous. The scores could shift by a few points on re-runs.</p>
+<p><strong>LLM-as-judge.</strong> The evaluation was done by an LLM, not by running a test suite. The grow-timing bug was caught by code inspection, not automated testing. A proper evaluation would include functional tests that exercise each acceptance criterion programmatically.</p>
+<p><strong>Scoring granularity.</strong> 1-5 integer scores across five dimensions give a 5-25 range. The actual spread was 17-21, a 4-point range across 9 implementations. The top-3 vs bottom-6 distinction is clearer than individual rankings.</p>
+<h2>Conclusions</h2>
 <p>Three data-driven takeaways:</p>
-
-<ol style="padding-left:24px;">
-<li style="margin-bottom:16px;"><strong>GSD's spec compliance advantage was decisive.</strong> All three GSD variants scored 5/5 on spec compliance and checked terminal size. deerflow-gsd led at 22/25; squad-gsd and superpowers-gsd scored 21 and 20. The toolkit's milestone-based approach &mdash; fresh context per phase, explicit verification &mdash; enforced spec requirements more reliably than scenario-based (Spec Kit) or task-based (OpenSpec) approaches.</li>
-<li style="margin-bottom:16px;"><strong>Architectural ambition correlated negatively with correctness.</strong> The two implementations with the most classes (superpowers-speckit, squad-speckit) both had the grow-timing bug (Correctness: 3/5 each). The EventBus implementation had dead code (Code Quality: 3/5). The top four scorers (22, 21, 21, 20) were all procedural or simple functional code.</li>
-<li style="margin-bottom:16px;"><strong>The spec toolkit shaped the code more than the orchestrator.</strong> Across all three orchestrators, GSD produced procedural code, Spec Kit produced OOP, OpenSpec produced functional. The orchestrator affected quality within those patterns but didn't change the patterns themselves.</li>
+<ol>
+<li>
+<p><strong>GSD's spec compliance advantage was decisive.</strong> All three GSD variants scored 5/5 on spec compliance and checked terminal size. The toolkit's milestone-based approach — fresh context per phase, explicit verification steps — appears to enforce spec requirements more reliably than scenario-based (Spec Kit) or task-based (OpenSpec) approaches. squad-gsd and squad-openspec tied at 21/25; superpowers-gsd scored 20. At least for this spec, GSD's "verify each phase" pattern caught requirements that other toolkits missed.</p>
+</li>
+<li>
+<p><strong>Architectural ambition correlated negatively with correctness.</strong> The two implementations with the most classes (superpowers-speckit: 5 classes, squad-speckit: Position + Protocol + entities) both had the grow-timing bug (Correctness: 3/5 each). The top scorers (21, 21, 20) were all procedural or simple functional code. squad-openspec (21/25) is instructive: its 203 lines are longer than average, but the extra code is defensive (try/except, resize loop) rather than structural (classes, protocols).</p>
+</li>
+<li>
+<p><strong>Native runtime ≠ documented methodology.</strong> DeerFlow's native run via <code>DeerFlowClient.chat()</code> produced simpler, shorter code (91-131 LOC) than the simulated run following its documented pipeline (152-181 LOC). The simulated deerflow-gsd scored 22/25; the native version scored 18/25. This suggests that a human carefully following a multi-agent workflow's documentation may extract more value than the runtime itself — or that the <code>chat()</code> API doesn't fully exercise DeerFlow's multi-agent orchestration. The spec toolkit's influence was also weaker in native runs: GSD and Spec Kit both produced procedural code, while the simulated versions showed clear architectural differentiation.</p>
+</li>
 </ol>
-
-<p>Whether this generalizes beyond Snake &mdash; beyond a well-understood, small, single-file problem &mdash; is an open question.</p>
-
-<hr style="border:none;border-top:1px solid #e0e0e0;margin:40px 0 24px;">
-
-<p style="color:#757575;font-size:15px;"><em>Nishant Manchanda builds things in Seattle.</em></p>
-<p style="color:#757575;font-size:15px;"><em>All code and evaluation data: <a href="https://github.com/nimanch/multi-agent-benchmark" style="color:#1a8917;text-decoration:none;">github.com/nimanch/multi-agent-benchmark</a></em></p>
-
-<h3 style="font-size:20px;font-weight:700;margin-top:36px;margin-bottom:12px;">References</h3>
-
-<p style="font-size:15px;"><strong>Orchestrators:</strong><br>
-<a href="https://github.com/obra/superpowers" style="color:#1a8917;text-decoration:none;">Superpowers</a> &mdash; Subagent-driven development with two-stage review (94K+ stars)<br>
-<a href="https://github.com/bytedance/deer-flow" style="color:#1a8917;text-decoration:none;">DeerFlow 2.0</a> &mdash; ByteDance's Research &rarr; Plan &rarr; Code &rarr; Review pipeline<br>
-<a href="https://github.com/bradygaster/squad" style="color:#1a8917;text-decoration:none;">Squad</a> &mdash; Team management layer for GitHub Copilot (v0.8.25)</p>
-
-<p style="font-size:15px;"><strong>Spec Toolkits:</strong><br>
-<a href="https://github.com/gsd-build/get-shit-done" style="color:#1a8917;text-decoration:none;">GSD (Get Shit Done)</a> &mdash; Milestone/phase project management (35K+ stars)<br>
-<a href="https://github.com/github/spec-kit" style="color:#1a8917;text-decoration:none;">Spec Kit</a> &mdash; GitHub's spec-driven development (72.7K stars)<br>
-<a href="https://github.com/Fission-AI/openspec" style="color:#1a8917;text-decoration:none;">OpenSpec</a> &mdash; Lightweight plan &rarr; apply &rarr; archive</p>
-
-<p style="font-size:15px;"><strong>Evaluation:</strong><br>
-<a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md" style="color:#1a8917;text-decoration:none;">SNAKE_SPEC.md</a> &mdash; Shared spec<br>
-<a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/EVALUATION.md" style="color:#1a8917;text-decoration:none;">EVALUATION.md</a> &mdash; Full scoring with per-implementation analysis<br>
-<a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/RESULTS.md" style="color:#1a8917;text-decoration:none;">RESULTS.md</a> &mdash; Raw benchmark results</p>
-
-</div>
-</body>
-</html>
+<p>Whether this generalizes beyond Snake — beyond a well-understood, small, single-file problem — is an open question.</p>
+<hr />
+<p><em>Nishant Manchanda builds things in Seattle.</em></p>
+<p><em>All code and evaluation data: <a href="https://github.com/nimanch/multi-agent-benchmark">github.com/nimanch/multi-agent-benchmark</a></em></p>
+<h2>References</h2>
+<p><strong>Orchestrators:</strong>
+- <a href="https://github.com/obra/superpowers">Superpowers</a> — Subagent-driven development framework with two-stage review (94K+ stars)
+- <a href="https://github.com/bytedance/deer-flow">DeerFlow 2.0</a> — ByteDance's Research → Plan → Code → Review pipeline
+- <a href="https://github.com/bradygaster/squad">Squad</a> — Team management layer for GitHub Copilot with persistent specialist roles (v0.8.25)</p>
+<p><strong>Spec Toolkits:</strong>
+- <a href="https://github.com/gsd-build/get-shit-done">GSD (Get Shit Done)</a> — Milestone/phase project management with fresh context windows (35K+ stars)
+- <a href="https://github.com/github/spec-kit">Spec Kit</a> — GitHub's spec-driven development with feature scenarios and acceptance criteria (72.7K stars)
+- <a href="https://github.com/Fission-AI/openspec">OpenSpec</a> — Lightweight plan → apply → archive workflow</p>
+<p><strong>Evaluation:</strong>
+- <a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md">SNAKE_SPEC.md</a> — Shared spec used across all 9 experiments
+- <a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/EVALUATION.md">EVALUATION.md</a> — Full LLM-as-Judge scoring with per-implementation analysis
+- <a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/RESULTS.md">RESULTS.md</a> — Raw benchmark results</p>
+</body></html>

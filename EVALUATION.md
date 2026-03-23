@@ -7,9 +7,12 @@
 | **superpowers-gsd** | 5 | 4 | 4 | 4 | 3 | **20** |
 | **superpowers-speckit** | 4 | 3 | 5 | 4 | 3 | **19** |
 | **superpowers-openspec** | 4 | 4 | 4 | 3 | 2 | **17** |
-| **deerflow-gsd** | 5 | 4 | 4 | 5 | 4 | **22** |
-| **deerflow-speckit** | 5 | 4 | 4 | 3 | 2 | **18** |
-| **deerflow-openspec** | 5 | 4 | 3 | 3 | 2 | **17** |
+| **deerflow-gsd** *(simulated)* | 5 | 4 | 4 | 5 | 4 | **22** |
+| **deerflow-speckit** *(simulated)* | 5 | 4 | 4 | 3 | 2 | **18** |
+| **deerflow-openspec** *(simulated)* | 5 | 4 | 3 | 3 | 2 | **17** |
+| **deerflow-gsd** *(native)* | 5 | 4 | 3 | 3 | 3 | **18** |
+| **deerflow-speckit** *(native)* | 5 | 4 | 3 | 3 | 3 | **18** |
+| **deerflow-openspec** *(native)* | 4 | 4 | 4 | 3 | 2 | **17** |
 | **squad-gsd** | 5 | 4 | 4 | 4 | 4 | **21** |
 | **squad-speckit** | 4 | 3 | 4 | 4 | 2 | **17** |
 | **squad-openspec** | 5 | 4 | 4 | 4 | 4 | **21** |
@@ -313,3 +316,97 @@ Two implementations (superpowers-speckit, squad-speckit) share the same architec
 
 ### Over-engineering correlation
 The more architecturally ambitious implementations (deerflow-openspec's EventBus, squad-speckit's Protocol/Position) scored lower overall. The EventBus has zero subscribers. The Protocol is never used for dispatch. These are patterns looking for a problem in a ~100-line game. Pragmatism won.
+
+---
+
+## DeerFlow Native Run Analysis (v5 Update)
+
+DeerFlow 2.0 was run natively using the embedded Python client (`DeerFlowClient`) with GitHub Models API (gpt-4o) as the LLM backend. This replaces the simulated DeerFlow results. The simulated versions are preserved as `snake.py.simulated` for comparison.
+
+### Setup
+- DeerFlow 2.0 installed via `uv sync` in backend workspace
+- Model: `gpt-4o` via `langchain_openai:ChatOpenAI` pointing to `https://models.inference.ai.azure.com`
+- API key: GitHub OAuth token (`gh auth token`)
+- Sandbox: local mode
+- Each experiment used `DeerFlowClient.chat()` with methodology-specific prompts
+
+### Native deerflow-gsd (Score: 18)
+
+**91 LOC.** Simple procedural. No classes, no imports beyond curses/random.
+
+**Strengths:**
+- Terminal size check present with user message
+- All 16 spec requirements met
+- Clean insert-head/conditionally-pop-tail growth pattern
+- Food respawn avoids snake overlap
+
+**Weaknesses:**
+- Recursive restart via `return main(stdscr)` — could stack overflow on many restarts
+- `#` char borders (functional but not decorative)
+- No food-spawn safety net
+- Head drawn last (at snake[-1]) — unconventional but works
+
+**Spec Compliance: 5** — All requirements met including terminal size.
+**Correctness: 4** — Works correctly. Recursive restart is a minor concern.
+**Code Quality: 3** — Bare-bones procedural. Functional but not well-organized.
+**Completeness: 3** — Meets spec, nothing extra.
+**Robustness: 3** — Terminal size check present. Recursive restart risk.
+
+### Native deerflow-speckit (Score: 18)
+
+**110 LOC.** Procedural despite Spec Kit methodology (interesting — native DeerFlow didn't adopt OOP even with scenario-based prompting).
+
+**Strengths:**
+- Terminal size check with user message
+- Clean direction prevention using curses.KEY_* constants
+- Standard head-first snake with insert/pop pattern
+- All spec requirements met
+
+**Weaknesses:**
+- Bare `except: pass` on input handling — swallows all errors
+- Recursive restart same as GSD variant
+- No extras beyond spec
+
+**Spec Compliance: 5** — All requirements met including terminal size.
+**Correctness: 4** — Works correctly.
+**Code Quality: 3** — Procedural, functional. The bare except is bad practice.
+**Completeness: 3** — Meets spec, nothing extra.
+**Robustness: 3** — Terminal size check. Bare except is double-edged.
+
+### Native deerflow-openspec (Score: 17)
+
+**131 LOC.** OOP with `SnakeGame` class — the only native variant to use classes.
+
+**Strengths:**
+- Clean class encapsulation with separate methods for render, update, handle_input
+- `place_food()` has while loop to avoid snake overlap
+- Uses both `stdscr.timeout(100)` and `time.sleep(TICK_RATE)` — belt and suspenders
+- Game loop with restart support via outer while loop
+
+**Weaknesses:**
+- **No terminal size check** — will crash on small terminals
+- Double timing mechanism (timeout + sleep) means actual tick rate is ~200ms
+- Initial snake position hardcoded at (5,5) — could be outside play area on small terminals
+- `time.sleep` in addition to curses timeout adds unnecessary latency
+
+**Spec Compliance: 4** — Missing terminal size check.
+**Correctness: 4** — Works on normal terminals. Double-sleep is a timing issue.
+**Code Quality: 4** — Clean OOP, good separation of concerns.
+**Completeness: 3** — Meets most spec requirements.
+**Robustness: 2** — No terminal size check, hardcoded initial position.
+
+### Key Finding: Native vs Simulated DeerFlow
+
+The native DeerFlow results are significantly simpler than the simulated versions:
+
+| Variant | Simulated LOC | Native LOC | Simulated Score | Native Score |
+|---|---|---|---|---|
+| GSD | 181 | 91 | 22 | 18 |
+| Spec Kit | 152 | 110 | 18 | 18 |
+| OpenSpec | 171 | 131 | 17 | 17 |
+
+The simulated deerflow-gsd was the top scorer at 22/25 with features like a food-spawn safety net (1000 attempts with fallback) and decorative Unicode game-over box. The native version is bare-bones but correct.
+
+This suggests the simulated methodology — where a human carefully followed DeerFlow's documented Research → Plan → Code → Review pipeline — produced more thorough results than DeerFlow's actual agent runtime, at least for this task. The native DeerFlow essentially produced single-shot LLM outputs with minimal multi-agent orchestration visible in the results.
+
+Notably, the spec toolkit influence was weaker in native runs: both GSD and Spec Kit produced nearly identical procedural code. Only OpenSpec prompted DeerFlow to use a class — suggesting the multi-agent orchestration didn't meaningfully reshape code architecture based on the methodology prompt.

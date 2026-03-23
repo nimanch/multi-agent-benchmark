@@ -1,171 +1,131 @@
-#!/usr/bin/env python3
-"""Snake Game - Generated via DeerFlow 2.0 + OpenSpec workflow.
-
-DeerFlow orchestrated research → plan → code → review sub-agents.
-OpenSpec structured the spec with opsx:plan → opsx:apply workflow.
-
-Architecture: Event-driven with callback pattern.
-"""
-
 import curses
 import random
-from collections import deque
+import time
 
-# Events
-EVT_MOVE = "move"
-EVT_EAT = "eat"
-EVT_DIE = "die"
-EVT_RESTART = "restart"
+# Constants
+TICK_RATE = 0.1  # Game tick in seconds
+SNAKE_CHAR = '█'
+FOOD_CHAR = '*'
+BORDER_CHAR = '#'
+HEAD_CHAR = 'O'
+SCORE_TEXT = " Score: {} "
+GAME_OVER_TEXT = "GAME OVER - Press 'r' to restart or 'q' to quit"
 
 # Directions
-DIRS = {"up": (-1, 0), "down": (1, 0), "left": (0, -1), "right": (0, 1)}
-OPPOSITES = {"up": "down", "down": "up", "left": "right", "right": "left"}
+UP = (-1, 0)
+DOWN = (1, 0)
+LEFT = (0, -1)
+RIGHT = (0, 1)
 
-KEY_DIR = {
-    curses.KEY_UP: "up", curses.KEY_DOWN: "down",
-    curses.KEY_LEFT: "left", curses.KEY_RIGHT: "right",
-}
-
-
-class EventBus:
-    """Simple event system for game decoupling."""
-    def __init__(self):
-        self._handlers = {}
-
-    def on(self, event, handler):
-        self._handlers.setdefault(event, []).append(handler)
-
-    def emit(self, event, **kwargs):
-        for h in self._handlers.get(event, []):
-            h(**kwargs)
-
-
-class SnakeEngine:
-    """Core game logic, event-driven."""
-
-    def __init__(self, h, w, bus):
-        self.h = h
-        self.w = w
-        self.bus = bus
-        self.reset()
-
-    def reset(self):
-        cy, cx = self.h // 2, self.w // 2
-        self.snake = deque([(cy, cx), (cy, cx - 1), (cy, cx - 2)])
-        self.dir_name = "right"
-        self.score = 0
-        self.alive = True
-        self.food = self._place_food()
-
-    def _place_food(self):
-        occupied = set(self.snake)
-        while True:
-            p = (random.randint(1, self.h - 2), random.randint(1, self.w - 2))
-            if p not in occupied:
-                return p
-
-    def set_direction(self, dir_name):
-        if dir_name and dir_name != OPPOSITES.get(self.dir_name):
-            self.dir_name = dir_name
-
-    def step(self):
-        if not self.alive:
-            return
-
-        dy, dx = DIRS[self.dir_name]
-        head = self.snake[0]
-        nh = (head[0] + dy, head[1] + dx)
-
-        # Wall check
-        if not (0 < nh[0] < self.h - 1 and 0 < nh[1] < self.w - 1):
-            self.alive = False
-            self.bus.emit(EVT_DIE, score=self.score)
-            return
-
-        # Self check
-        if nh in self.snake:
-            self.alive = False
-            self.bus.emit(EVT_DIE, score=self.score)
-            return
-
-        self.snake.appendleft(nh)
-
-        if nh == self.food:
-            self.score += 10
-            self.food = self._place_food()
-            self.bus.emit(EVT_EAT, score=self.score)
-        else:
-            self.snake.pop()
-
-        self.bus.emit(EVT_MOVE)
-
-
-class Display:
-    """Curses renderer."""
-
+class SnakeGame:
     def __init__(self, stdscr):
-        self.scr = stdscr
-        curses.curs_set(0)
+        self.stdscr = stdscr
+        self.running = True
+        self.restart = False
+        self.init_game()
 
-    def render(self, engine):
-        self.scr.erase()
-        h, w = engine.h, engine.w
+    def init_game(self):
+        # Initialize game state
+        self.direction = RIGHT
+        self.snake = [(5, 5), (5, 4), (5, 3)]
+        self.food = self.place_food()
+        self.score = 0
+        self.height, self.width = self.stdscr.getmaxyx()
 
-        self.scr.border()
-
-        s = f" Score: {engine.score} "
-        self.scr.addstr(0, (w - len(s)) // 2, s, curses.A_BOLD)
-
-        try:
-            self.scr.addch(engine.food[0], engine.food[1], '*', curses.A_BOLD)
-        except curses.error:
-            pass
-
-        for i, (y, x) in enumerate(engine.snake):
-            try:
-                self.scr.addch(y, x, 'O' if i == 0 else '█')
-            except curses.error:
-                pass
-
-        self.scr.refresh()
-
-    def game_over(self, score, h, w):
-        self.scr.erase()
-        msgs = ["GAME OVER", f"Final Score: {score}", "r=restart  q=quit"]
-        for i, msg in enumerate(msgs):
-            self.scr.addstr(h // 2 - 1 + i, (w - len(msg)) // 2, msg,
-                            curses.A_BOLD if i == 0 else 0)
-        self.scr.refresh()
-
-
-def main(stdscr):
-    h, w = stdscr.getmaxyx()
-    display = Display(stdscr)
-
-    while True:
-        bus = EventBus()
-        engine = SnakeEngine(h, w, bus)
-
-        stdscr.nodelay(True)
-        stdscr.timeout(100)
-
-        while engine.alive:
-            key = stdscr.getch()
-            if key in KEY_DIR:
-                engine.set_direction(KEY_DIR[key])
-            engine.step()
-            if engine.alive:
-                display.render(engine)
-
-        display.game_over(engine.score, h, w)
-        stdscr.nodelay(False)
+    def place_food(self):
         while True:
-            k = stdscr.getch()
-            if k == ord('q'):
-                return
-            if k == ord('r'):
+            food = (random.randint(1, self.height - 2), random.randint(1, self.width - 2))
+            if food not in self.snake:
+                return food
+
+    def render(self):
+        self.stdscr.clear()
+        # Draw border
+        for x in range(self.width):
+            self.stdscr.addch(0, x, BORDER_CHAR)
+            self.stdscr.addch(self.height - 1, x, BORDER_CHAR)
+        for y in range(self.height):
+            self.stdscr.addch(y, 0, BORDER_CHAR)
+            self.stdscr.addch(y, self.width - 1, BORDER_CHAR)
+
+        # Draw snake
+        for y, x in self.snake[1:]:
+            self.stdscr.addch(y, x, SNAKE_CHAR)
+        # Draw snake head
+        head_y, head_x = self.snake[0]
+        self.stdscr.addch(head_y, head_x, HEAD_CHAR)
+
+        # Draw food
+        food_y, food_x = self.food
+        self.stdscr.addch(food_y, food_x, FOOD_CHAR)
+
+        # Draw score
+        self.stdscr.addstr(0, 2, SCORE_TEXT.format(self.score))
+        self.stdscr.refresh()
+
+    def update(self):
+        head_y, head_x = self.snake[0]
+        move_y, move_x = self.direction
+        new_head = (head_y + move_y, head_x + move_x)
+
+        # Check collisions
+        if (new_head[0] in (0, self.height - 1) or
+                new_head[1] in (0, self.width - 1) or
+                new_head in self.snake):
+            self.game_over()
+            return
+
+        # Update snake position
+        self.snake.insert(0, new_head)
+        if new_head == self.food:
+            self.score += 10
+            self.food = self.place_food()
+        else:
+            self.snake.pop()  # Remove tail if no food eaten
+
+    def handle_input(self):
+        key = self.stdscr.getch()
+        if key == curses.KEY_UP and self.direction != DOWN:
+            self.direction = UP
+        elif key == curses.KEY_DOWN and self.direction != UP:
+            self.direction = DOWN
+        elif key == curses.KEY_LEFT and self.direction != RIGHT:
+            self.direction = LEFT
+        elif key == curses.KEY_RIGHT and self.direction != LEFT:
+            self.direction = RIGHT
+        elif key == ord('q'):
+            self.running = False
+
+    def game_over(self):
+        self.stdscr.clear()
+        self.stdscr.addstr(self.height // 2 - 1, (self.width - len(GAME_OVER_TEXT)) // 2, GAME_OVER_TEXT)
+        self.stdscr.addstr(self.height // 2, (self.width - len(SCORE_TEXT.format(self.score))) // 2, SCORE_TEXT.format(self.score))
+        self.stdscr.refresh()
+        while True:
+            key = self.stdscr.getch()
+            if key == ord('q'):
+                self.running = False
+                break
+            elif key == ord('r'):
+                self.restart = True
                 break
 
+    def run(self):
+        while self.running:
+            self.render()
+            self.handle_input()
+            self.update()
+            time.sleep(TICK_RATE)
 
-if __name__ == "__main__":
-    curses.wrapper(main)
+def main(stdscr):
+    curses.curs_set(0)
+    stdscr.nodelay(1)
+    stdscr.timeout(100)
+
+    while True:
+        game = SnakeGame(stdscr)
+        game.run()
+        if not game.restart:
+            break
+
+curses.wrapper(main)
