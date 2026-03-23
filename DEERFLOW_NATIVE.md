@@ -1,52 +1,65 @@
-# DeerFlow Native Run Attempt
+# DeerFlow Native Run — March 22, 2026
 
-**Date:** 2026-03-22
-**Machine:** ARM64 NVIDIA Jetson, Ubuntu, Python 3.10.12
+## Summary
 
-## What Was Done
+DeerFlow 2.0 was run natively on the Jetson ARM64 machine using the embedded Python client (`DeerFlowClient`) with GitHub Models API as the LLM backend. All three experiments completed successfully, producing working Snake game implementations.
 
-### Python 3.12 Installation ✅
-- Installed pyenv: `curl -s https://pyenv.run | bash`
-- Built Python 3.12.9 via pyenv: `pyenv install 3.12.9`
-- Location: `~/.pyenv/versions/3.12.9/bin/python3.12`
-- Warnings: Missing bzip2, curses, readline, sqlite3 extensions (non-critical for DeerFlow)
-- **Time:** ~4 minutes (ARM64 compile)
+## Setup
 
-### DeerFlow Clone ✅
-- Cloned: `git clone https://github.com/bytedance/deer-flow.git ~/deerflow`
-- Version: DeerFlow 2.0 (ground-up rewrite, shares no code with v1)
-- Architecture: Super agent harness with sub-agents, memory, sandboxes, skills
-- Has embedded Python client (`DeerFlowClient`) for programmatic use without HTTP server
+- **DeerFlow**: Cloned at `/home/nimanch/deerflow`, installed via `uv sync` in `backend/` workspace
+- **Python**: 3.12.9 via pyenv (DeerFlow requires ≥3.12)
+- **Model**: `gpt-4o` via `langchain_openai:ChatOpenAI`
+- **API Endpoint**: `https://models.inference.ai.azure.com` (GitHub Models API)
+- **API Key**: GitHub OAuth token (`gh auth token`)
+- **Sandbox**: Local mode (`deerflow.sandbox.local:LocalSandboxProvider`)
+- **Config**: Custom `config.yaml` with minimal tool set (write_file, read_file only — web search disabled)
 
-### DeerFlow Setup ❌ — Blocked on API Keys
-DeerFlow requires an LLM API key to run. It supports:
-- OpenAI (GPT-4, GPT-5)
-- DeepSeek
-- Volcengine/Doubao
-- OpenRouter (any model via OpenAI-compatible API)
-- Google Gemini
+## Method
 
-**No LLM API keys were available in the environment.** Only available keys:
-- `MATON_API_KEY` (API gateway, not an LLM)
-- `BRAVE_API_KEY` (web search)
-- `AZURE_TRANSCRIBE_KEY` (speech-to-text only, not a general LLM endpoint)
+Each experiment used `DeerFlowClient.chat()` with a single prompt containing:
+1. The full SNAKE_SPEC.md content
+2. Methodology-specific instructions (GSD milestones / Spec Kit scenarios / OpenSpec plan-apply-archive)
+3. Instructions to output only Python code
 
-### What Would Be Needed
-1. Set `OPENAI_API_KEY` or equivalent in the environment
-2. Create `config.yaml` from `config.example.yaml` with model configuration
-3. Run `make install` (requires uv, Node.js 22+, pnpm, nginx — or use embedded client)
-4. Use `DeerFlowClient` for programmatic access:
-   ```python
-   from deerflow.client import DeerFlowClient
-   client = DeerFlowClient()
-   response = client.chat("Build a snake game following this spec: ...")
-   ```
+DeerFlow orchestrated internally — sub-agent memory was enabled, tools were available. Each call took ~10-15 seconds.
 
-## Conclusion
+## Results
 
-**DeerFlow could not run natively** — not due to Python version (3.12 was successfully installed) but due to missing LLM API keys. The original article's characterization of the DeerFlow limitation as "Python 3.12+ requirement on ARM64" was partially correct but incomplete: even with Python 3.12 available, DeerFlow needs an LLM API key to orchestrate its sub-agents.
+| Variant | LOC | Compiles | Terminal Check | Architecture | Score |
+|---|---|---|---|---|---|
+| deerflow-gsd | 91 | ✅ | ✅ | Bare procedural | 18/25 |
+| deerflow-speckit | 110 | ✅ | ✅ | Procedural | 18/25 |
+| deerflow-openspec | 131 | ✅ | ❌ | OOP (SnakeGame class) | 17/25 |
 
-The existing simulated DeerFlow results remain unchanged. To run DeerFlow natively in the future:
-1. Add an `OPENAI_API_KEY` or `OPENROUTER_API_KEY` to the environment
-2. Configure `~/deerflow/config.yaml`
-3. Re-run the 3 experiments with appropriate prompts
+All three compile and run correctly. Simulated versions preserved as `snake.py.simulated`.
+
+## Key Finding: Native vs Simulated
+
+| Variant | Simulated LOC | Native LOC | Simulated Score | Native Score |
+|---|---|---|---|---|
+| GSD | 181 | 91 | 22 | 18 |
+| Spec Kit | 152 | 110 | 18 | 18 |
+| OpenSpec | 171 | 131 | 17 | 17 |
+
+The native runtime produced simpler, shorter code. The simulated deerflow-gsd (which followed the documented Research → Plan → Code → Review pipeline step by step) scored 22/25 — the former overall leader. The native version scored 18/25.
+
+This suggests `DeerFlowClient.chat()` doesn't fully exercise the multi-agent pipeline that the documentation describes. The `chat()` method appears to route through the lead agent but may not invoke the full research → plan → code → review chain for straightforward code generation tasks.
+
+## Issues Encountered
+
+1. **Config validation**: Initial `sandbox: mode: local` failed Pydantic validation; needed `sandbox: use: deerflow.sandbox.local:LocalSandboxProvider`
+2. **No install issues**: ARM64 + Python 3.12 via pyenv worked fine with `uv sync`
+3. **Rate limits**: GitHub Models API handled all 3 requests without throttling
+4. **Memory timer**: DeerFlow logged "Memory update timer set for 30s" and "Memory update queued" — sub-agent memory was active
+
+## Files Changed
+
+- `deerflow-gsd/snake.py` — native DeerFlow output (91 LOC)
+- `deerflow-gsd/snake.py.simulated` — previous simulated version (181 LOC)
+- `deerflow-speckit/snake.py` — native DeerFlow output (110 LOC)
+- `deerflow-speckit/snake.py.simulated` — previous simulated version (152 LOC)
+- `deerflow-openspec/snake.py` — native DeerFlow output (131 LOC)
+- `deerflow-openspec/snake.py.simulated` — previous simulated version (171 LOC)
+- `EVALUATION.md` — updated with native scores and analysis
+- `ARTICLE.md` — updated methodology, scores, analysis for v5
+- `article.html` — regenerated HTML
