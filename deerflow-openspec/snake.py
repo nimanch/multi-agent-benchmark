@@ -111,7 +111,7 @@ class Display:
         self.scr.erase()
         h, w = engine.h, engine.w
 
-        self.scr.border('│', '│', '─', '─', '┌', '┐', '└', '┘')
+        self.scr.border()
 
         s = f" Score: {engine.score} "
         self.scr.addstr(0, (w - len(s)) // 2, s, curses.A_BOLD)

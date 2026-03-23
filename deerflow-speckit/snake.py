@@ -105,7 +105,7 @@ class SnakeGame:
         h, w = self.h, self.w
 
         # Border using curses built-in
-        self.scr.border('│', '│', '─', '─', '┌', '┐', '└', '┘')
+        self.scr.border()
 
         # Score
         s = f" Score: {score} "
