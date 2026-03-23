@@ -6,7 +6,7 @@
 
 There's a new AI coding agent every week. Most benchmarks compare them on vibes. I wanted something more controlled: give multiple agent combinations the same spec, same language, same machine, and compare the output code systematically.
 
-I picked three multi-agent orchestrators (Superpowers, DeerFlow 2.0, Squad) and three spec-driven toolkits (GSD, Spec Kit, OpenSpec), producing a 3×3 matrix of nine implementations. The task: a terminal Snake game in Python curses, from a [shared spec](https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md).
+I picked three multi-agent orchestrators ([Superpowers](https://github.com/obra/superpowers), [DeerFlow 2.0](https://github.com/bytedance/deer-flow), [Squad](https://github.com/bradygaster/squad)) and three spec-driven toolkits ([GSD](https://github.com/gsd-build/get-shit-done), [Spec Kit](https://github.com/github/spec-kit), [OpenSpec](https://github.com/Fission-AI/openspec)), producing a 3×3 matrix of nine implementations. The task: a terminal Snake game in Python curses, from a [shared spec](https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md).
 
 Then I had an LLM judge score each implementation across five dimensions.
 
@@ -23,9 +23,9 @@ The results surprised me. The "best architecture" had a bug. The simplest approa
 - Single-file implementations, zero manual interventions on any of the nine
 
 **What was NOT controlled:**
-- **DeerFlow 2.0** couldn't run natively (requires Python 3.12+; Jetson has 3.10). Its multi-agent workflow was simulated following its documented architecture.
-- **Squad** requires Copilot Pro+ cloud for native multi-agent. Its Coordinator → specialists pipeline was simulated locally.
-- Only **Superpowers** ran as a fully native agent orchestration.
+- **[DeerFlow 2.0](https://github.com/bytedance/deer-flow)** couldn't run natively (requires Python 3.12+; Jetson has 3.10). Its multi-agent workflow was simulated following its documented architecture.
+- **[Squad](https://github.com/bradygaster/squad)** requires Copilot Pro+ cloud for native multi-agent. Its Coordinator → specialists pipeline was simulated locally.
+- Only **[Superpowers](https://github.com/obra/superpowers)** ran as a fully native agent orchestration.
 
 This is a real limitation. The DeerFlow and Squad results reflect their *methodology* applied manually, not their runtime. Take those results with appropriate skepticism.
 
@@ -208,3 +208,20 @@ Whether this generalizes beyond Snake — beyond a well-understood, small, singl
 *Nishant Manchanda builds things in Seattle.*
 
 *All code and evaluation data: [github.com/nimanch/multi-agent-benchmark](https://github.com/nimanch/multi-agent-benchmark)*
+
+## References
+
+**Orchestrators:**
+- [Superpowers](https://github.com/obra/superpowers) — obra's subagent-driven development framework (94K+ stars)
+- [DeerFlow 2.0](https://github.com/bytedance/deer-flow) — ByteDance's multi-agent orchestration with research agents
+- [Squad](https://github.com/bradygaster/squad) — Multi-agent coordination for GitHub Copilot
+
+**Spec Toolkits:**
+- [GSD (Get Shit Done)](https://github.com/gsd-build/get-shit-done) — Milestone/phase project management for AI agents (35K+ stars)
+- [Spec Kit](https://github.com/github/spec-kit) — GitHub's spec-driven development toolkit (72.7K stars)
+- [OpenSpec](https://github.com/Fission-AI/openspec) — Lightweight plan → apply → archive workflow
+
+**Evaluation:**
+- [SNAKE_SPEC.md](https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md) — Shared spec used across all 9 experiments
+- [EVALUATION.md](https://github.com/nimanch/multi-agent-benchmark/blob/main/EVALUATION.md) — Full LLM-as-Judge scoring with per-implementation analysis
+- [RESULTS.md](https://github.com/nimanch/multi-agent-benchmark/blob/main/RESULTS.md) — Raw benchmark results

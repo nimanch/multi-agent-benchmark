@@ -1,284 +1,327 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>I Built the Same Snake Game 9 Times with Different AI Agent Combos</title>
-<style>
-body { font-family: 'Charter', 'Georgia', serif; max-width: 720px; margin: 0 auto; padding: 20px; color: #292929; line-height: 1.7; background: #fff; }
-h1 { font-size: 32px; line-height: 1.2; margin-bottom: 8px; }
-h2 { font-size: 24px; margin-top: 40px; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; }
-h3 { font-size: 20px; margin-top: 30px; }
-.subtitle { color: #757575; font-size: 16px; margin-bottom: 30px; }
-.byline { color: #757575; font-size: 14px; margin-bottom: 20px; }
-pre { background: #1e1e2e; color: #cdd6f4; padding: 16px 20px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5; font-family: 'SF Mono', 'Fira Code', monospace; }
-code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 14px; font-family: 'SF Mono', 'Fira Code', monospace; }
-pre code { background: none; padding: 0; }
-blockquote { border-left: 3px solid #292929; margin-left: 0; padding-left: 20px; color: #555; }
-.gif-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0; }
-.gif-cell { text-align: center; }
-.gif-cell img { width: 100%; border-radius: 6px; border: 1px solid #e0e0e0; }
-.gif-cell .label { font-size: 12px; color: #757575; margin-top: 4px; font-family: 'SF Mono', monospace; }
-.winner-badge { background: #ffd700; color: #292929; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-.speed-badge { background: #00d4ff; color: #292929; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-.test-badge { background: #a0e86c; color: #292929; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-.results-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-family: 'SF Mono', monospace; font-size: 14px; }
-.results-table th { background: #1e1e2e; color: #cdd6f4; padding: 10px 14px; text-align: center; }
-.results-table td { padding: 10px 14px; text-align: center; border-bottom: 1px solid #e0e0e0; }
-.results-table tr:hover { background: #f8f8f8; }
-.highlight { background: #fff8dc; font-weight: bold; }
-.repo-links { background: #f7f7f7; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
-.repo-links a { color: #1a8917; text-decoration: none; font-weight: 500; }
-.repo-links a:hover { text-decoration: underline; }
-.section-gif { text-align: center; margin: 20px 0; }
-.section-gif img { max-width: 500px; width: 100%; border-radius: 8px; border: 1px solid #e0e0e0; }
-.section-gif .caption { font-size: 13px; color: #757575; margin-top: 6px; font-style: italic; }
-hr { border: none; border-top: 1px solid #e0e0e0; margin: 40px 0; }
-.callout { background: #f0f7ff; border-left: 4px solid #1a8917; padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
-.footer { color: #757575; font-size: 14px; margin-top: 40px; font-style: italic; }
-</style>
-</head>
-<body>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#ffffff;">
+<div style="max-width:720px;margin:0 auto;padding:40px 20px;font-family:Charter,'Bitstream Charter',Georgia,'Times New Roman',serif;font-size:18px;line-height:1.7;color:#292929;">
 
-<h1>I Built the Same Snake Game 9 Times with Different AI Agent Combos. Here's What Actually Won.</h1>
-<p class="byline">By Nishant Manchanda &middot; March 2026</p>
+<h1 style="font-size:36px;font-weight:700;line-height:1.2;margin-bottom:4px;color:#000;">Evaluating 9 AI Agent Combinations on the Same Snake Game</h1>
+<p style="font-size:16px;color:#757575;margin-top:8px;margin-bottom:32px;"><em>Nishant Manchanda &middot; March 2026</em></p>
+<hr style="border:none;border-top:1px solid #e6e6e6;margin:0 0 32px 0;">
 
-<hr>
+<p>There's a new AI coding agent every week. Most benchmarks compare them on vibes. I wanted something more controlled: give multiple agent combinations the same spec, same language, same machine, and compare the output code systematically.</p>
 
-<p>It's March 2026, and every week brings a new AI coding agent that promises to "10x your development." <a href="https://github.com/obra/superpowers">Superpowers</a> from obra. <a href="https://github.com/bytedance/deer-flow">DeerFlow 2.0</a> from ByteDance. GitHub's <a href="https://github.com/github/squad">Squad</a> multi-agent orchestration. <a href="https://github.com/github/spec-kit">Spec Kit</a>. <a href="https://github.com/gsd-build/get-shit-done">GSD</a>. <a href="https://github.com/Fission-AI/openspec">OpenSpec</a>.</p>
+<p>I picked three multi-agent orchestrators (Superpowers, DeerFlow 2.0, Squad) and three spec-driven toolkits (GSD, Spec Kit, OpenSpec), producing a 3&times;3 matrix of nine implementations. The task: a terminal Snake game in Python curses, from a <a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md" style="color:#1a8917;text-decoration:none;">shared spec</a>.</p>
 
-<p>Everyone's benchmarking these tools on toy problems and declaring winners based on vibes.</p>
+<p>Then I had an LLM judge score each implementation across five dimensions.</p>
 
-<p>I wanted data.</p>
+<p>The results surprised me. The "best architecture" had a bug. The simplest approach swept the top three spots. And the spec toolkit shaped the code structure more than the orchestrator did.</p>
 
-<p>So I built the same game &mdash; a terminal Snake game in Python &mdash; using every combination of three multi-agent orchestrators and three spec-driven toolkits. That's a 3&times;3 matrix. Nine experiments. Same spec, same language, same machine. Here's what I found.</p>
+<p><strong>Repo</strong>: <a href="https://github.com/nimanch/multi-agent-benchmark" style="color:#1a8917;text-decoration:none;">github.com/nimanch/multi-agent-benchmark</a></p>
 
-<h2>The Setup</h2>
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">Methodology</h2>
 
-<div class="repo-links">
-<strong>The Orchestrators</strong> (how the AI agents coordinate):<br>
-&bull; <a href="https://github.com/obra/superpowers">Superpowers</a> (obra, 94K+ &#9733;) &mdash; Subagent-driven development with two-stage review<br>
-&bull; <a href="https://github.com/bytedance/deer-flow">DeerFlow 2.0</a> (ByteDance) &mdash; Research &rarr; Plan &rarr; Code &rarr; Review pipeline with sub-agent memory<br>
-&bull; <a href="https://github.com/github/squad">Squad</a> (GitHub) &mdash; Coordinator &rarr; Plan &rarr; Implement &rarr; Review &rarr; Test specialist pipeline
-</div>
+<p><strong>What was controlled:</strong></p>
+<ul style="margin:8px 0 16px 0;padding-left:24px;">
+<li>Identical spec (<a href="https://github.com/nimanch/multi-agent-benchmark/blob/main/SNAKE_SPEC.md" style="color:#1a8917;text-decoration:none;">SNAKE_SPEC.md</a>) &mdash; 16 acceptance criteria covering movement, collision, scoring, display, and restart</li>
+<li>Same language: Python 3.x with curses (stdlib only)</li>
+<li>Same machine: NVIDIA Jetson ARM64, 8GB RAM, Ubuntu</li>
+<li>Single-file implementations, zero manual interventions on any of the nine</li>
+</ul>
 
-<div class="repo-links">
-<strong>The Spec Toolkits</strong> (how requirements are structured):<br>
-&bull; <a href="https://github.com/gsd-build/get-shit-done">GSD</a> (Get Shit Done, 35K+ &#9733;) &mdash; Milestone/phase project management. Ship fast.<br>
-&bull; <a href="https://github.com/github/spec-kit">Spec Kit</a> (GitHub, 72.7K &#9733;) &mdash; Feature scenarios, acceptance criteria, architectural specs<br>
-&bull; <a href="https://github.com/Fission-AI/openspec">OpenSpec</a> (Fission-AI) &mdash; Lightweight <code>plan &rarr; apply &rarr; archive</code> workflow
-</div>
+<p><strong>What was NOT controlled:</strong></p>
+<ul style="margin:8px 0 16px 0;padding-left:24px;">
+<li><strong>DeerFlow 2.0</strong> couldn't run natively (requires Python 3.12+; Jetson has 3.10). Its multi-agent workflow was simulated following its documented architecture.</li>
+<li><strong>Squad</strong> requires Copilot Pro+ cloud for native multi-agent. Its Coordinator &rarr; specialists pipeline was simulated locally.</li>
+<li>Only <strong>Superpowers</strong> ran as a fully native agent orchestration.</li>
+</ul>
 
-<p><strong>The Game</strong>: A full-featured terminal Snake &mdash; arrow key controls, food spawning, score tracking, wall and self collision, game over screen, restart. All in Python curses.</p>
+<p>This is a real limitation. The DeerFlow and Squad results reflect their <em>methodology</em> applied manually, not their runtime. Take those results with appropriate skepticism.</p>
 
-<p><strong>The Machine</strong>: An NVIDIA Jetson (ARM64, 8GB RAM) &mdash; because if your tools can't work on constrained hardware, they're not as universal as they claim.</p>
+<p><strong>Evaluation:</strong> An LLM judge (not me) scored each implementation 1&ndash;5 on five dimensions: Spec Compliance, Correctness, Code Quality, Completeness, and Robustness. I reviewed the scores against the code and agreed with most of them, though the evaluation has its own limitations (discussed below).</p>
 
-<h2>All 9 Games in Action</h2>
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">The Scores</h2>
 
-<div class="gif-grid">
-  <div class="gif-cell">
-    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-gsd.gif" alt="Superpowers + GSD gameplay">
-    <div class="label">Superpowers + GSD</div>
-  </div>
-  <div class="gif-cell">
-    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-speckit.gif" alt="Superpowers + Spec Kit gameplay">
-    <div class="label"><span class="winner-badge">&#127942; WINNER</span> Superpowers + Spec Kit</div>
-  </div>
-  <div class="gif-cell">
-    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-openspec.gif" alt="Superpowers + OpenSpec gameplay">
-    <div class="label">Superpowers + OpenSpec</div>
-  </div>
-  <div class="gif-cell">
-    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-gsd.gif" alt="DeerFlow + GSD gameplay">
-    <div class="label">DeerFlow + GSD</div>
-  </div>
-  <div class="gif-cell">
-    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-speckit.gif" alt="DeerFlow + Spec Kit gameplay">
-    <div class="label">DeerFlow + Spec Kit</div>
-  </div>
-  <div class="gif-cell">
-    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-openspec.gif" alt="DeerFlow + OpenSpec gameplay">
-    <div class="label">DeerFlow + OpenSpec</div>
-  </div>
-  <div class="gif-cell">
-    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-gsd.gif" alt="Squad + GSD gameplay">
-    <div class="label"><span class="speed-badge">&#9889; FASTEST</span> Squad + GSD</div>
-  </div>
-  <div class="gif-cell">
-    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-speckit.gif" alt="Squad + Spec Kit gameplay">
-    <div class="label">Squad + Spec Kit</div>
-  </div>
-  <div class="gif-cell">
-    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-openspec.gif" alt="Squad + OpenSpec gameplay">
-    <div class="label"><span class="test-badge">&#129514; TESTABLE</span> Squad + OpenSpec</div>
-  </div>
-</div>
-
-<h2>The Results at a Glance</h2>
-
-<table class="results-table">
+<table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:15px;line-height:1.5;">
 <thead>
-<tr><th></th><th>GSD</th><th>Spec Kit</th><th>OpenSpec</th></tr>
+<tr style="border-bottom:2px solid #292929;">
+<th style="text-align:left;padding:10px 12px;font-weight:700;">Implementation</th>
+<th style="text-align:center;padding:10px 8px;font-weight:700;">Spec</th>
+<th style="text-align:center;padding:10px 8px;font-weight:700;">Correct</th>
+<th style="text-align:center;padding:10px 8px;font-weight:700;">Quality</th>
+<th style="text-align:center;padding:10px 8px;font-weight:700;">Complete</th>
+<th style="text-align:center;padding:10px 8px;font-weight:700;">Robust</th>
+<th style="text-align:center;padding:10px 8px;font-weight:700;">Total</th>
+</tr>
 </thead>
 <tbody>
-<tr><td><strong>Superpowers</strong></td><td>178 LOC</td><td class="highlight">213 LOC &#127942;</td><td>179 LOC</td></tr>
-<tr><td><strong>DeerFlow</strong></td><td>181 LOC</td><td>152 LOC</td><td>171 LOC</td></tr>
-<tr><td><strong>Squad</strong></td><td class="highlight">132 LOC &#9889;</td><td>180 LOC</td><td>157 LOC</td></tr>
+<tr style="background:#fdf8e8;border-bottom:1px solid #e6e6e6;">
+<td style="padding:10px 12px;font-weight:600;">deerflow-gsd <span style="display:inline-block;background:#d4a017;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;">#1</span></td>
+<td style="text-align:center;padding:10px 8px;">5</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">5</td><td style="text-align:center;padding:10px 8px;">4</td>
+<td style="text-align:center;padding:10px 8px;font-weight:700;">22</td>
+</tr>
+<tr style="background:#eef4ff;border-bottom:1px solid #e6e6e6;">
+<td style="padding:10px 12px;font-weight:600;">squad-gsd <span style="display:inline-block;background:#3b82f6;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px;vertical-align:middle;">#2</span></td>
+<td style="text-align:center;padding:10px 8px;">5</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td>
+<td style="text-align:center;padding:10px 8px;font-weight:700;">21</td>
+</tr>
+<tr style="border-bottom:1px solid #e6e6e6;">
+<td style="padding:10px 12px;">superpowers-gsd</td>
+<td style="text-align:center;padding:10px 8px;">5</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">3</td>
+<td style="text-align:center;padding:10px 8px;font-weight:700;">20</td>
+</tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;">
+<td style="padding:10px 12px;">superpowers-speckit</td>
+<td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">3</td><td style="text-align:center;padding:10px 8px;">5</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">3</td>
+<td style="text-align:center;padding:10px 8px;font-weight:700;">19</td>
+</tr>
+<tr style="border-bottom:1px solid #e6e6e6;">
+<td style="padding:10px 12px;">deerflow-speckit</td>
+<td style="text-align:center;padding:10px 8px;">5</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">3</td><td style="text-align:center;padding:10px 8px;">2</td>
+<td style="text-align:center;padding:10px 8px;font-weight:700;">18</td>
+</tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;">
+<td style="padding:10px 12px;">squad-openspec</td>
+<td style="text-align:center;padding:10px 8px;">5</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">3</td><td style="text-align:center;padding:10px 8px;">2</td>
+<td style="text-align:center;padding:10px 8px;font-weight:700;">18</td>
+</tr>
+<tr style="border-bottom:1px solid #e6e6e6;">
+<td style="padding:10px 12px;">superpowers-openspec</td>
+<td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">3</td><td style="text-align:center;padding:10px 8px;">2</td>
+<td style="text-align:center;padding:10px 8px;font-weight:700;">17</td>
+</tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;">
+<td style="padding:10px 12px;">deerflow-openspec</td>
+<td style="text-align:center;padding:10px 8px;">5</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">3</td><td style="text-align:center;padding:10px 8px;">3</td><td style="text-align:center;padding:10px 8px;">2</td>
+<td style="text-align:center;padding:10px 8px;font-weight:700;">17</td>
+</tr>
+<tr style="border-bottom:1px solid #e6e6e6;">
+<td style="padding:10px 12px;">squad-speckit</td>
+<td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">3</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">4</td><td style="text-align:center;padding:10px 8px;">2</td>
+<td style="text-align:center;padding:10px 8px;font-weight:700;">17</td>
+</tr>
 </tbody>
 </table>
 
-<p>All nine produced working, playable games with <strong>zero manual interventions</strong>. Let that sink in. Every combination cleared the spec.</p>
+<p>GSD swept the top three. Every orchestrator paired with GSD outscored the same orchestrator paired with either alternative toolkit.</p>
 
-<p>The interesting part isn't <em>whether</em> they worked &mdash; it's <em>how</em> they worked.</p>
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">Spec Compliance Matrix</h2>
 
-<h2>What Each Combination Produced</h2>
+<p>Not all "9/9 pass" results are equal. The LLM judge checked 16 specific requirements:</p>
 
-<h3>&#127942; Winner: Superpowers + Spec Kit (213 LOC)</h3>
-
-<div class="section-gif">
-<img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-speckit.gif" alt="Superpowers + Spec Kit gameplay">
-<div class="caption">Clean OOP architecture: 5 classes, single responsibility everywhere</div>
+<div style="overflow-x:auto;margin:24px 0;">
+<table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.4;">
+<thead>
+<tr style="border-bottom:2px solid #292929;">
+<th style="text-align:left;padding:8px 6px;font-weight:700;white-space:nowrap;">Requirement</th>
+<th style="text-align:center;padding:8px 4px;font-weight:700;font-size:11px;">SP-GSD</th>
+<th style="text-align:center;padding:8px 4px;font-weight:700;font-size:11px;">SP-SK</th>
+<th style="text-align:center;padding:8px 4px;font-weight:700;font-size:11px;">SP-OS</th>
+<th style="text-align:center;padding:8px 4px;font-weight:700;font-size:11px;">DF-GSD</th>
+<th style="text-align:center;padding:8px 4px;font-weight:700;font-size:11px;">DF-SK</th>
+<th style="text-align:center;padding:8px 4px;font-weight:700;font-size:11px;">DF-OS</th>
+<th style="text-align:center;padding:8px 4px;font-weight:700;font-size:11px;">SQ-GSD</th>
+<th style="text-align:center;padding:8px 4px;font-weight:700;font-size:11px;">SQ-SK</th>
+<th style="text-align:center;padding:8px 4px;font-weight:700;font-size:11px;">SQ-OS</th>
+</tr>
+</thead>
+<tbody>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Continuous movement</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Arrow key controls</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">No reverse direction</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Random food spawn</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Food as <code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:13px;">*</code></td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Head=<code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:13px;">O</code>, Body=<code style="background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:13px;">&#9608;</code></td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Score +10, displayed</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="background:#fff8e1;border-bottom:1px solid #e6e6e6;"><td style="padding:6px;font-weight:600;">Snake grows on eat</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#d97706;">&#9888;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#d97706;">&#9888;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Wall collision = death</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Self collision = death</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Border around play area</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Game over screen</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">Final score shown</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">q=quit, r=restart</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:6px;">100ms tick</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td></tr>
+<tr style="background:#fff0f0;border-bottom:1px solid #e6e6e6;"><td style="padding:6px;font-weight:600;">Min terminal 20&times;10</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#d97706;">&#9888;</td><td style="text-align:center;padding:6px;color:#dc2626;">&#10007;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#dc2626;">&#10007;</td><td style="text-align:center;padding:6px;color:#dc2626;">&#10007;</td><td style="text-align:center;padding:6px;color:#16a34a;">&#10003;</td><td style="text-align:center;padding:6px;color:#dc2626;">&#10007;</td><td style="text-align:center;padding:6px;color:#dc2626;">&#10007;</td></tr>
+</tbody>
+</table>
 </div>
 
-<p>Five clean classes: <code>GameConfig</code>, <code>Direction</code>, <code>Snake</code>, <code>Food</code>, <code>Renderer</code>, and <code>Game</code>. Single responsibility everywhere. The kind of code you'd accept in a PR without notes.</p>
-
-<pre><code>class Snake:
-    def __init__(self, start_y, start_x):
-        self.body = [(start_y, start_x), (start_y, start_x - 1), (start_y, start_x - 2)]
-        self.direction = Direction.RIGHT
-        self.grow_pending = False
-
-    def change_direction(self, new_dir):
-        if Direction.is_valid_change(self.direction, new_dir):
-            self.direction = new_dir
-
-    def move(self):
-        dy, dx = self.direction
-        new_head = (self.head[0] + dy, self.head[1] + dx)
-        self.body.insert(0, new_head)
-        if not self.grow_pending:
-            self.body.pop()
-        else:
-            self.grow_pending = False</code></pre>
-
-<p><strong>Why it won</strong>: <a href="https://github.com/obra/superpowers">Superpowers'</a> two-stage review (spec compliance first, then code quality) combined with <a href="https://github.com/github/spec-kit">Spec Kit's</a> structured acceptance criteria created a natural pressure toward clean architecture. The spec toolkit demanded scenarios; the orchestrator demanded quality.</p>
-
-<h3>&#9889; Best for Speed: Squad + GSD (132 LOC)</h3>
-
-<div class="section-gif">
-<img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-gsd.gif" alt="Squad + GSD gameplay">
-<div class="caption">The leanest implementation: no classes, just functions that ship</div>
-</div>
-
-<p>The shortest, leanest implementation. No classes, no abstractions &mdash; just functions that do exactly what the spec says.</p>
-
-<pre><code>def play(stdscr):
-    h, w = stdscr.getmaxyx()
-    snake = [(cy, cx), (cy, cx - 1), (cy, cx - 2)]
-    direction = (0, 1)
-    # ... 130 lines of clean, working game</code></pre>
-
-<p><strong>The vibe</strong>: <a href="https://github.com/gsd-build/get-shit-done">GSD's</a> "ship it" philosophy met Squad's pragmatic pipeline and produced the fastest path from spec to working game.</p>
-
-<h3>&#129514; Most Testable: Squad + OpenSpec (157 LOC)</h3>
-
-<div class="section-gif">
-<img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-openspec.gif" alt="Squad + OpenSpec gameplay">
-<div class="caption">Dict-based state, pure functions: trivially testable without mocking</div>
-</div>
-
-<p>Dict-based state with pure functions. Every game operation is a function that takes state in and returns state out.</p>
-
-<pre><code>def step(state):
-    """Advance game one tick. Returns updated state."""
-    dy, dx = DIRECTIONS[state['dir']]
-    hy, hx = state['snake'][0]
-    nh = (hy + dy, hx + dx)
-    # Pure logic, trivially testable</code></pre>
-
-<p><strong>Why it matters</strong>: You could drop <code>pytest</code> tests on this without mocking a single thing. The state is just a dict. The functions are pure. This is what TDD dreams are made of.</p>
-
-<h3>Most Creative: DeerFlow + OpenSpec (171 LOC)</h3>
-
-<div class="section-gif">
-<img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-openspec.gif" alt="DeerFlow + OpenSpec gameplay">
-<div class="caption">Event bus architecture: DeerFlow's research agent thought about extensibility</div>
-</div>
-
-<p>The only implementation with an event bus pattern:</p>
-
-<pre><code>class EventBus:
-    def on(self, event, handler):
-        self._handlers.setdefault(event, []).append(handler)
-    def emit(self, event, **kwargs):
-        for h in self._handlers.get(event, []):
-            h(**kwargs)</code></pre>
-
-<p><a href="https://github.com/bytedance/deer-flow">DeerFlow's</a> research-first approach led to an architecture you'd use for a real game engine, not a toy project. Over-engineered for Snake? Sure. But it shows the framework <em>thinking</em> about extensibility.</p>
-
-<h2>The Big Insight</h2>
-
-<div class="callout">
-<strong>Spec toolkits shape architecture more than orchestrators.</strong><br><br>
-The orchestrator (Superpowers vs DeerFlow vs Squad) affected code <em>quality</em>. But the spec toolkit affected code <em>structure</em>:<br>
-&bull; <strong>GSD</strong> &rarr; procedural, minimal, ship-focused<br>
-&bull; <strong>Spec Kit</strong> &rarr; OOP, typed, well-separated concerns<br>
-&bull; <strong>OpenSpec</strong> &rarr; functional, state-as-data, testable<br><br>
-<strong>The orchestrator is the quality dial. The spec toolkit is the architecture dial.</strong>
-</div>
-
-<h2>More Patterns</h2>
-
-<p><strong>Two-stage review is genuinely better.</strong> Superpowers' approach of reviewing spec compliance <em>separately</em> from code quality caught things that single-pass review missed. Like having a PM and a tech lead review independently.</p>
-
-<p><strong>Research agents add polish at scale.</strong> DeerFlow's research-first pattern seems overkill for a snake game. Extrapolate to a real project and it could prevent entire categories of mistakes.</p>
-
-<p><strong>"Just ship it" has its place.</strong> Squad + GSD: 132 lines, perfectly working game. Sometimes you don't need five classes and an event bus.</p>
-
-<h2>The Honest Caveats</h2>
-
-<ol>
-<li><strong>These frameworks are AI agent guidance systems</strong>, not automated compilers. They provide prompts, workflows, and structure for AI agents to follow.</li>
-<li><strong>DeerFlow couldn't run natively on ARM64/Jetson</strong> (needs Python 3.12+). Its workflow was simulated based on its well-documented architecture.</li>
-<li><strong>Squad requires Copilot Pro+ for cloud multi-agent.</strong> The pipeline was simulated locally following its documented architecture.</li>
-<li><strong>Zero interventions across all 9</strong> partly reflects that Snake is a well-understood problem. A more complex project would reveal bigger differences.</li>
+<p>Two things jump out:</p>
+<ol style="margin:8px 0 16px 0;padding-left:24px;">
+<li><strong>Only 3 of 9 implementations checked minimum terminal size</strong> &mdash; and all three were GSD variants. This is a clear spec requirement that 6 implementations simply ignored.</li>
+<li><strong>Two implementations (superpowers-speckit, squad-speckit) have a grow-timing bug</strong> where the snake doesn't visually grow until one frame after eating. More on this below.</li>
 </ol>
 
-<h2>My Recommendations</h2>
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">The Grow-Timing Bug</h2>
 
-<table class="results-table">
-<thead><tr><th>If you need...</th><th>Use this</th></tr></thead>
+<p>The spec says "the snake grows by one segment each time it eats food." Two implementations (superpowers-speckit and squad-speckit) get this subtly wrong due to an architectural choice.</p>
+
+<p>Here's the pattern that causes the bug &mdash; from superpowers-speckit:</p>
+
+<div style="background:#1e1e2e;border-radius:8px;padding:16px 20px;margin:20px 0;overflow-x:auto;">
+<pre style="margin:0;font-family:'Fira Code',Consolas,'Courier New',monospace;font-size:14px;line-height:1.6;color:#cdd6f4;"><span style="color:#6c7086;"># Game loop (simplified):</span>
+snake.<span style="color:#89b4fa;">move</span>()                    <span style="color:#6c7086;"># advance first</span>
+<span style="color:#cba6f7;">if</span> snake.head == food.position:
+    snake.<span style="color:#89b4fa;">grow</span>()                <span style="color:#6c7086;"># sets grow_pending = True</span>
+    food.<span style="color:#89b4fa;">respawn</span>(...)
+
+<span style="color:#6c7086;"># Inside Snake.move():</span>
+<span style="color:#cba6f7;">def</span> <span style="color:#89b4fa;">move</span>(<span style="color:#fab387;">self</span>):
+    new_head = (<span style="color:#fab387;">self</span>.head[<span style="color:#fab387;">0</span>] + dy, <span style="color:#fab387;">self</span>.head[<span style="color:#fab387;">1</span>] + dx)
+    <span style="color:#fab387;">self</span>.body.<span style="color:#89b4fa;">insert</span>(<span style="color:#fab387;">0</span>, new_head)
+    <span style="color:#cba6f7;">if not</span> <span style="color:#fab387;">self</span>.grow_pending:   <span style="color:#6c7086;"># checked BEFORE grow() is called this tick</span>
+        <span style="color:#fab387;">self</span>.body.<span style="color:#89b4fa;">pop</span>()
+    <span style="color:#cba6f7;">else</span>:
+        <span style="color:#fab387;">self</span>.grow_pending = <span style="color:#fab387;">False</span></pre>
+</div>
+
+<p>The problem: <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">move()</code> executes before the food check. So when the snake eats food, <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">grow_pending</code> is still <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">False</code> during that tick's <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">move()</code>. The tail gets popped. <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">grow()</code> then sets <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">grow_pending = True</code>, which takes effect on the <em>next</em> tick. The snake still grows by exactly one segment &mdash; but there's a one-frame visual glitch where the food disappears before the snake visually extends.</p>
+
+<p>Compare with the pattern used by 7 of 9 implementations (here from deerflow-gsd):</p>
+
+<div style="background:#1e1e2e;border-radius:8px;padding:16px 20px;margin:20px 0;overflow-x:auto;">
+<pre style="margin:0;font-family:'Fira Code',Consolas,'Courier New',monospace;font-size:14px;line-height:1.6;color:#cdd6f4;"><span style="color:#cba6f7;">def</span> <span style="color:#89b4fa;">move_snake</span>(snake, direction, food):
+    new_head = (head_y + dy, head_x + dx)
+    new_snake = [new_head] + snake[:]
+    ate = new_head == food
+    <span style="color:#cba6f7;">if not</span> ate:
+        new_snake.<span style="color:#89b4fa;">pop</span>()         <span style="color:#6c7086;"># grow decision is immediate</span>
+    <span style="color:#cba6f7;">return</span> new_snake, ate</pre>
+</div>
+
+<p>Insert head, then conditionally pop tail. No deferred flag, no timing issue. The simpler pattern is the correct one.</p>
+
+<p>This is the most interesting result from the evaluation: the implementation with the <em>best</em> architecture score (superpowers-speckit: Code Quality 5/5, five clean OOP classes) had a functional bug. The procedural implementations with no classes got the behavior right.</p>
+
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">The Dead EventBus</h2>
+
+<p>deerflow-openspec built an event-driven architecture with an <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">EventBus</code> class:</p>
+
+<div style="background:#1e1e2e;border-radius:8px;padding:16px 20px;margin:20px 0;overflow-x:auto;">
+<pre style="margin:0;font-family:'Fira Code',Consolas,'Courier New',monospace;font-size:14px;line-height:1.6;color:#cdd6f4;"><span style="color:#cba6f7;">class</span> <span style="color:#f9e2af;">EventBus</span>:
+    <span style="color:#cba6f7;">def</span> <span style="color:#89b4fa;">on</span>(<span style="color:#fab387;">self</span>, event, handler):
+        <span style="color:#fab387;">self</span>._handlers.<span style="color:#89b4fa;">setdefault</span>(event, []).<span style="color:#89b4fa;">append</span>(handler)
+    <span style="color:#cba6f7;">def</span> <span style="color:#89b4fa;">emit</span>(<span style="color:#fab387;">self</span>, event, **kwargs):
+        <span style="color:#cba6f7;">for</span> h <span style="color:#cba6f7;">in</span> <span style="color:#fab387;">self</span>._handlers.<span style="color:#89b4fa;">get</span>(event, []):
+            <span style="color:#89b4fa;">h</span>(**kwargs)</pre>
+</div>
+
+<p>Events are emitted throughout the game &mdash; <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">EVT_MOVE</code>, <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">EVT_EAT</code>, <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">EVT_DIE</code>. But <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">bus.on()</code> is never called anywhere. Zero subscribers. The events fire into the void.</p>
+
+<p>The evaluator called this "architecture astronautics," which is fair. The game works fine &mdash; the EventBus just doesn't do anything. It's the code equivalent of installing a fire alarm system and never connecting the sirens.</p>
+
+<p>One redeeming quality: deerflow-openspec is the only implementation that uses <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">collections.deque</code> for the snake body, giving O(1) head insertion vs O(n) for list <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;font-size:15px;">insert(0, ...)</code>. For a 20&times;10 terminal it doesn't matter, but it's the technically correct data structure.</p>
+
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">Lines of Code</h2>
+
+<table style="width:100%;border-collapse:collapse;margin:24px 0;font-size:15px;line-height:1.5;">
+<thead>
+<tr style="border-bottom:2px solid #292929;">
+<th style="text-align:left;padding:10px 12px;font-weight:700;">Implementation</th>
+<th style="text-align:center;padding:10px 12px;font-weight:700;">LOC</th>
+<th style="text-align:left;padding:10px 12px;font-weight:700;">Architecture</th>
+</tr>
+</thead>
 <tbody>
-<tr><td>Quality (solo dev)</td><td class="highlight"><a href="https://github.com/obra/superpowers">Superpowers</a> + <a href="https://github.com/github/spec-kit">Spec Kit</a></td></tr>
-<tr><td>Speed (team shipping)</td><td class="highlight">Squad + <a href="https://github.com/gsd-build/get-shit-done">GSD</a></td></tr>
-<tr><td>Testability</td><td class="highlight">Squad + <a href="https://github.com/Fission-AI/openspec">OpenSpec</a></td></tr>
-<tr><td>Complex/research-heavy</td><td class="highlight"><a href="https://github.com/bytedance/deer-flow">DeerFlow</a> + any spec toolkit</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:10px 12px;">squad-gsd</td><td style="text-align:center;padding:10px 12px;">132</td><td style="padding:10px 12px;">Clean procedural</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:10px 12px;">deerflow-speckit</td><td style="text-align:center;padding:10px 12px;">152</td><td style="padding:10px 12px;">State machine + enum</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:10px 12px;">squad-openspec</td><td style="text-align:center;padding:10px 12px;">157</td><td style="padding:10px 12px;">Dict-state, pure functions</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:10px 12px;">deerflow-openspec</td><td style="text-align:center;padding:10px 12px;">171</td><td style="padding:10px 12px;">Event-driven (dead EventBus)</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:10px 12px;">superpowers-gsd</td><td style="text-align:center;padding:10px 12px;">178</td><td style="padding:10px 12px;">Procedural with constants</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:10px 12px;">superpowers-openspec</td><td style="text-align:center;padding:10px 12px;">179</td><td style="padding:10px 12px;">Functional + dataclass</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:10px 12px;">squad-speckit</td><td style="text-align:center;padding:10px 12px;">180</td><td style="padding:10px 12px;">Protocol pattern + Position class</td></tr>
+<tr style="background:#f9f9f9;border-bottom:1px solid #e6e6e6;"><td style="padding:10px 12px;">deerflow-gsd</td><td style="text-align:center;padding:10px 12px;">181</td><td style="padding:10px 12px;">Module-style functions</td></tr>
+<tr style="border-bottom:1px solid #e6e6e6;"><td style="padding:10px 12px;">superpowers-speckit</td><td style="text-align:center;padding:10px 12px;">213</td><td style="padding:10px 12px;">OOP (5 classes)</td></tr>
 </tbody>
 </table>
 
-<hr>
+<p>Is LOC a meaningful metric here? Probably not on its own. squad-gsd's 132 lines scored 21/25 (second place). superpowers-speckit's 213 lines scored 19/25 (fourth, with a bug). More code meant more architectural ambition, which correlated with more opportunities for bugs and dead code, not with better outcomes.</p>
 
-<p><strong>The real test would be building something complex</strong> &mdash; a full-stack app, a distributed system &mdash; with each combination and measuring over weeks, not minutes. That's the experiment I'd love to see.</p>
+<p>The range is narrow enough (132&ndash;213) that I wouldn't draw strong conclusions. All nine are under 250 lines. This is a small enough problem that code length is mostly noise.</p>
 
-<p>For now, if you're choosing your AI agent stack in 2026, here's the bottom line: <strong>the spec toolkit matters more than you think, and two-stage review is worth the overhead.</strong></p>
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">What the Spec Toolkit Controls vs. What the Orchestrator Controls</h2>
 
-<div class="repo-links" style="margin-top: 30px; text-align: center;">
-<strong>&#128187; All code &amp; GIFs:</strong> <a href="https://github.com/nimanch/multi-agent-benchmark">github.com/nimanch/multi-agent-benchmark</a>
+<p>The spec toolkit shaped <em>architecture</em>:</p>
+<ul style="margin:8px 0 16px 0;padding-left:24px;">
+<li><strong>GSD</strong> &rarr; procedural, pragmatic, "just make it work"</li>
+<li><strong>Spec Kit</strong> &rarr; OOP, typed, separated concerns, more elaborate class hierarchies</li>
+<li><strong>OpenSpec</strong> &rarr; functional, state-as-data, testable pure functions</li>
+</ul>
+
+<p>The orchestrator shaped <em>completeness and robustness</em>:</p>
+<ul style="margin:8px 0 16px 0;padding-left:24px;">
+<li>All GSD variants checked terminal size. None of the non-GSD variants did.</li>
+<li>deerflow-gsd was the only implementation with a food-spawn safety net (1000 attempts with fallback position)</li>
+<li>Superpowers consistently produced more polished rendering (manual Unicode box-drawing borders)</li>
+</ul>
+
+<p>The interaction between them is what mattered. GSD's milestone-based approach apparently forced all three orchestrators to handle edge cases (terminal size) that the other toolkits didn't prompt for. The spec explicitly says "Minimum terminal size: 20x10" &mdash; GSD treated this as a requirement; Spec Kit and OpenSpec apparently didn't surface it as a first-class acceptance criterion.</p>
+
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">The Demos</h2>
+
+<p>All nine games running:</p>
+
+<table style="width:100%;border-collapse:collapse;margin:24px 0;">
+<thead>
+<tr>
+<th style="padding:8px;"></th>
+<th style="padding:8px;text-align:center;font-weight:700;font-size:15px;">GSD</th>
+<th style="padding:8px;text-align:center;font-weight:700;font-size:15px;">Spec Kit</th>
+<th style="padding:8px;text-align:center;font-weight:700;font-size:15px;">OpenSpec</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="padding:8px;font-weight:700;font-size:14px;vertical-align:middle;">Superpowers</td>
+<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-gsd.gif" alt="superpowers-gsd" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-speckit.gif" alt="superpowers-speckit" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-openspec.gif" alt="superpowers-openspec" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+</tr>
+<tr>
+<td style="padding:8px;font-weight:700;font-size:14px;vertical-align:middle;">DeerFlow</td>
+<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-gsd.gif" alt="deerflow-gsd" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-speckit.gif" alt="deerflow-speckit" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-openspec.gif" alt="deerflow-openspec" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+</tr>
+<tr>
+<td style="padding:8px;font-weight:700;font-size:14px;vertical-align:middle;">Squad</td>
+<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-gsd.gif" alt="squad-gsd" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-speckit.gif" alt="squad-speckit" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+<td style="padding:4px;text-align:center;"><img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-openspec.gif" alt="squad-openspec" style="width:100%;max-width:220px;border-radius:6px;border:1px solid #e0e0e0;"></td>
+</tr>
+</tbody>
+</table>
+
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">Limitations</h2>
+
+<p>This evaluation has real weaknesses:</p>
+
+<p><strong>Snake is too easy.</strong> All nine implementations work. The interesting differences are in edge cases (terminal size, grow timing) and code style &mdash; not in whether the agents could solve the problem. A harder task (multi-file, networking, database) would produce more differentiation.</p>
+
+<p><strong>Two of three orchestrators were simulated.</strong> DeerFlow and Squad couldn't run natively on the test machine. I followed their documented workflows manually. This means their results reflect the <em>methodology</em> more than the <em>tooling</em>. If DeerFlow's runtime catches bugs its documented workflow doesn't, we'd see different results with native execution.</p>
+
+<p><strong>N=1 per combination.</strong> I ran each combination once. LLM outputs are stochastic. Running each combination five times and averaging would be more rigorous. The scores could shift by a few points on re-runs.</p>
+
+<p><strong>LLM-as-judge.</strong> The evaluation was done by an LLM, not by running a test suite. The grow-timing bug was caught by code inspection, not automated testing. A proper evaluation would include functional tests that exercise each acceptance criterion programmatically.</p>
+
+<p><strong>Scoring granularity.</strong> 1&ndash;5 integer scores across five dimensions give a 5&ndash;25 range. The actual spread was 17&ndash;22, a 5-point range across 9 implementations. Whether deerflow-gsd at 22 is meaningfully better than squad-gsd at 21 is debatable. The top-3 vs bottom-6 distinction is clearer than individual rankings.</p>
+
+<h2 style="font-size:28px;font-weight:700;margin-top:48px;margin-bottom:16px;color:#000;">Conclusions</h2>
+
+<p>Three data-driven takeaways:</p>
+
+<ol style="margin:8px 0 16px 0;padding-left:24px;">
+<li style="margin-bottom:12px;"><strong>GSD's spec compliance advantage was decisive.</strong> All three GSD variants scored 5/5 on spec compliance and checked terminal size. The toolkit's milestone-based approach appears to enforce spec requirements more reliably than scenario-based (Spec Kit) or task-based (OpenSpec) approaches. At least for this spec.</li>
+<li style="margin-bottom:12px;"><strong>Architectural ambition correlated negatively with correctness.</strong> The two implementations with the most classes (superpowers-speckit: 5 classes, squad-speckit: Position + Protocol + entities) both had the grow-timing bug. The implementation with the most elaborate architecture (deerflow-openspec: EventBus) had dead code. The top three scorers were all procedural or simple functional code.</li>
+<li style="margin-bottom:12px;"><strong>The spec toolkit shaped the code more than the orchestrator.</strong> Across all three orchestrators, GSD produced procedural code, Spec Kit produced OOP code, and OpenSpec produced functional code. The orchestrator affected quality within those patterns but didn't change the patterns themselves.</li>
+</ol>
+
+<p>Whether this generalizes beyond Snake &mdash; beyond a well-understood, small, single-file problem &mdash; is an open question.</p>
+
+<hr style="border:none;border-top:1px solid #e6e6e6;margin:48px 0 24px 0;">
+
+<p style="color:#757575;font-size:16px;"><em>Nishant Manchanda builds things in Seattle.</em></p>
+<p style="color:#757575;font-size:16px;"><em>All code and evaluation data: <a href="https://github.com/nimanch/multi-agent-benchmark" style="color:#1a8917;text-decoration:none;">github.com/nimanch/multi-agent-benchmark</a></em></p>
+
 </div>
-
-<hr>
-
-<p class="footer">Nishant Manchanda builds things in Seattle. He's interested in AI agents, graph-based memory, and cats (two tabbies).</p>
-
-<div class="repo-links" style="font-size: 13px;">
-<strong>Tools used in this benchmark:</strong><br>
-&bull; <a href="https://github.com/obra/superpowers">Superpowers</a> (obra) &mdash; 94K+ stars<br>
-&bull; <a href="https://github.com/bytedance/deer-flow">DeerFlow 2.0</a> (ByteDance)<br>
-&bull; <a href="https://github.com/github/squad">Squad</a> (GitHub Copilot)<br>
-&bull; <a href="https://github.com/gsd-build/get-shit-done">GSD / Get Shit Done</a> &mdash; 35K+ stars<br>
-&bull; <a href="https://github.com/github/spec-kit">GitHub Spec Kit</a> &mdash; 72.7K stars<br>
-&bull; <a href="https://github.com/Fission-AI/openspec">OpenSpec</a> (Fission-AI)<br>
-</div>
-
 </body>
 </html>
