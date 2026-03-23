@@ -89,7 +89,7 @@ def _spawn(h, w, snake):
 
 def _render(stdscr, snake, food, score, h, w):
     stdscr.erase()
-    stdscr.border('│', '│', '─', '─', '┌', '┐', '└', '┘')
+    stdscr.border()
 
     label = f" Score: {score} "
     stdscr.addstr(0, (w - len(label)) // 2, label, curses.A_BOLD)

@@ -93,7 +93,7 @@ def draw_frame(stdscr, snake, food, score, h, w):
     stdscr.erase()
 
     # Draw border
-    stdscr.border('│', '│', '─', '─', '┌', '┐', '└', '┘')
+    stdscr.border()
 
     # Score
     label = f" Score: {score} "

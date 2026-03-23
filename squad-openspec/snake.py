@@ -92,7 +92,7 @@ def render(stdscr, state):
     stdscr.erase()
     h, w = state['h'], state['w']
 
-    stdscr.border('│', '│', '─', '─', '┌', '┐', '└', '┘')
+    stdscr.border()
 
     s = f" Score: {state['score']} "
     stdscr.addstr(0, (w - len(s)) // 2, s, curses.A_BOLD)

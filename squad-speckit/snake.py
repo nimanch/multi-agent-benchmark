@@ -117,7 +117,7 @@ class FoodEntity:
 def draw_ui(stdscr, snake, food, score, h, w):
     """Composite render."""
     stdscr.erase()
-    stdscr.border('│', '│', '─', '─', '┌', '┐', '└', '┘')
+    stdscr.border()
     s = f" Score: {score} "
     stdscr.addstr(0, (w - len(s)) // 2, s, curses.A_BOLD)
     food.draw(stdscr)
