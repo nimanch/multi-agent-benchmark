@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I Built the Same Snake Game 9 Times with Different AI Agent Combos</title>
+<style>
+body { font-family: 'Charter', 'Georgia', serif; max-width: 720px; margin: 0 auto; padding: 20px; color: #292929; line-height: 1.7; background: #fff; }
+h1 { font-size: 32px; line-height: 1.2; margin-bottom: 8px; }
+h2 { font-size: 24px; margin-top: 40px; border-bottom: 1px solid #e0e0e0; padding-bottom: 8px; }
+h3 { font-size: 20px; margin-top: 30px; }
+.subtitle { color: #757575; font-size: 16px; margin-bottom: 30px; }
+.byline { color: #757575; font-size: 14px; margin-bottom: 20px; }
+pre { background: #1e1e2e; color: #cdd6f4; padding: 16px 20px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5; font-family: 'SF Mono', 'Fira Code', monospace; }
+code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 14px; font-family: 'SF Mono', 'Fira Code', monospace; }
+pre code { background: none; padding: 0; }
+blockquote { border-left: 3px solid #292929; margin-left: 0; padding-left: 20px; color: #555; }
+.gif-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0; }
+.gif-cell { text-align: center; }
+.gif-cell img { width: 100%; border-radius: 6px; border: 1px solid #e0e0e0; }
+.gif-cell .label { font-size: 12px; color: #757575; margin-top: 4px; font-family: 'SF Mono', monospace; }
+.winner-badge { background: #ffd700; color: #292929; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+.speed-badge { background: #00d4ff; color: #292929; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+.test-badge { background: #a0e86c; color: #292929; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
+.results-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-family: 'SF Mono', monospace; font-size: 14px; }
+.results-table th { background: #1e1e2e; color: #cdd6f4; padding: 10px 14px; text-align: center; }
+.results-table td { padding: 10px 14px; text-align: center; border-bottom: 1px solid #e0e0e0; }
+.results-table tr:hover { background: #f8f8f8; }
+.highlight { background: #fff8dc; font-weight: bold; }
+.repo-links { background: #f7f7f7; border-radius: 8px; padding: 16px 20px; margin: 20px 0; }
+.repo-links a { color: #1a8917; text-decoration: none; font-weight: 500; }
+.repo-links a:hover { text-decoration: underline; }
+.section-gif { text-align: center; margin: 20px 0; }
+.section-gif img { max-width: 500px; width: 100%; border-radius: 8px; border: 1px solid #e0e0e0; }
+.section-gif .caption { font-size: 13px; color: #757575; margin-top: 6px; font-style: italic; }
+hr { border: none; border-top: 1px solid #e0e0e0; margin: 40px 0; }
+.callout { background: #f0f7ff; border-left: 4px solid #1a8917; padding: 16px 20px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+.footer { color: #757575; font-size: 14px; margin-top: 40px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>I Built the Same Snake Game 9 Times with Different AI Agent Combos. Here's What Actually Won.</h1>
+<p class="byline">By Nishant Manchanda &middot; March 2026</p>
+
+<hr>
+
+<p>It's March 2026, and every week brings a new AI coding agent that promises to "10x your development." <a href="https://github.com/obra/superpowers">Superpowers</a> from obra. <a href="https://github.com/bytedance/deer-flow">DeerFlow 2.0</a> from ByteDance. GitHub's <a href="https://github.com/github/squad">Squad</a> multi-agent orchestration. <a href="https://github.com/github/spec-kit">Spec Kit</a>. <a href="https://github.com/gsd-build/get-shit-done">GSD</a>. <a href="https://github.com/Fission-AI/openspec">OpenSpec</a>.</p>
+
+<p>Everyone's benchmarking these tools on toy problems and declaring winners based on vibes.</p>
+
+<p>I wanted data.</p>
+
+<p>So I built the same game &mdash; a terminal Snake game in Python &mdash; using every combination of three multi-agent orchestrators and three spec-driven toolkits. That's a 3&times;3 matrix. Nine experiments. Same spec, same language, same machine. Here's what I found.</p>
+
+<h2>The Setup</h2>
+
+<div class="repo-links">
+<strong>The Orchestrators</strong> (how the AI agents coordinate):<br>
+&bull; <a href="https://github.com/obra/superpowers">Superpowers</a> (obra, 94K+ &#9733;) &mdash; Subagent-driven development with two-stage review<br>
+&bull; <a href="https://github.com/bytedance/deer-flow">DeerFlow 2.0</a> (ByteDance) &mdash; Research &rarr; Plan &rarr; Code &rarr; Review pipeline with sub-agent memory<br>
+&bull; <a href="https://github.com/github/squad">Squad</a> (GitHub) &mdash; Coordinator &rarr; Plan &rarr; Implement &rarr; Review &rarr; Test specialist pipeline
+</div>
+
+<div class="repo-links">
+<strong>The Spec Toolkits</strong> (how requirements are structured):<br>
+&bull; <a href="https://github.com/gsd-build/get-shit-done">GSD</a> (Get Shit Done, 35K+ &#9733;) &mdash; Milestone/phase project management. Ship fast.<br>
+&bull; <a href="https://github.com/github/spec-kit">Spec Kit</a> (GitHub, 72.7K &#9733;) &mdash; Feature scenarios, acceptance criteria, architectural specs<br>
+&bull; <a href="https://github.com/Fission-AI/openspec">OpenSpec</a> (Fission-AI) &mdash; Lightweight <code>plan &rarr; apply &rarr; archive</code> workflow
+</div>
+
+<p><strong>The Game</strong>: A full-featured terminal Snake &mdash; arrow key controls, food spawning, score tracking, wall and self collision, game over screen, restart. All in Python curses.</p>
+
+<p><strong>The Machine</strong>: An NVIDIA Jetson (ARM64, 8GB RAM) &mdash; because if your tools can't work on constrained hardware, they're not as universal as they claim.</p>
+
+<h2>All 9 Games in Action</h2>
+
+<div class="gif-grid">
+  <div class="gif-cell">
+    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-gsd.gif" alt="Superpowers + GSD gameplay">
+    <div class="label">Superpowers + GSD</div>
+  </div>
+  <div class="gif-cell">
+    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-speckit.gif" alt="Superpowers + Spec Kit gameplay">
+    <div class="label"><span class="winner-badge">&#127942; WINNER</span> Superpowers + Spec Kit</div>
+  </div>
+  <div class="gif-cell">
+    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-openspec.gif" alt="Superpowers + OpenSpec gameplay">
+    <div class="label">Superpowers + OpenSpec</div>
+  </div>
+  <div class="gif-cell">
+    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-gsd.gif" alt="DeerFlow + GSD gameplay">
+    <div class="label">DeerFlow + GSD</div>
+  </div>
+  <div class="gif-cell">
+    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-speckit.gif" alt="DeerFlow + Spec Kit gameplay">
+    <div class="label">DeerFlow + Spec Kit</div>
+  </div>
+  <div class="gif-cell">
+    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-openspec.gif" alt="DeerFlow + OpenSpec gameplay">
+    <div class="label">DeerFlow + OpenSpec</div>
+  </div>
+  <div class="gif-cell">
+    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-gsd.gif" alt="Squad + GSD gameplay">
+    <div class="label"><span class="speed-badge">&#9889; FASTEST</span> Squad + GSD</div>
+  </div>
+  <div class="gif-cell">
+    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-speckit.gif" alt="Squad + Spec Kit gameplay">
+    <div class="label">Squad + Spec Kit</div>
+  </div>
+  <div class="gif-cell">
+    <img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-openspec.gif" alt="Squad + OpenSpec gameplay">
+    <div class="label"><span class="test-badge">&#129514; TESTABLE</span> Squad + OpenSpec</div>
+  </div>
+</div>
+
+<h2>The Results at a Glance</h2>
+
+<table class="results-table">
+<thead>
+<tr><th></th><th>GSD</th><th>Spec Kit</th><th>OpenSpec</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Superpowers</strong></td><td>178 LOC</td><td class="highlight">213 LOC &#127942;</td><td>179 LOC</td></tr>
+<tr><td><strong>DeerFlow</strong></td><td>181 LOC</td><td>152 LOC</td><td>171 LOC</td></tr>
+<tr><td><strong>Squad</strong></td><td class="highlight">132 LOC &#9889;</td><td>180 LOC</td><td>157 LOC</td></tr>
+</tbody>
+</table>
+
+<p>All nine produced working, playable games with <strong>zero manual interventions</strong>. Let that sink in. Every combination cleared the spec.</p>
+
+<p>The interesting part isn't <em>whether</em> they worked &mdash; it's <em>how</em> they worked.</p>
+
+<h2>What Each Combination Produced</h2>
+
+<h3>&#127942; Winner: Superpowers + Spec Kit (213 LOC)</h3>
+
+<div class="section-gif">
+<img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/superpowers-speckit.gif" alt="Superpowers + Spec Kit gameplay">
+<div class="caption">Clean OOP architecture: 5 classes, single responsibility everywhere</div>
+</div>
+
+<p>Five clean classes: <code>GameConfig</code>, <code>Direction</code>, <code>Snake</code>, <code>Food</code>, <code>Renderer</code>, and <code>Game</code>. Single responsibility everywhere. The kind of code you'd accept in a PR without notes.</p>
+
+<pre><code>class Snake:
+    def __init__(self, start_y, start_x):
+        self.body = [(start_y, start_x), (start_y, start_x - 1), (start_y, start_x - 2)]
+        self.direction = Direction.RIGHT
+        self.grow_pending = False
+
+    def change_direction(self, new_dir):
+        if Direction.is_valid_change(self.direction, new_dir):
+            self.direction = new_dir
+
+    def move(self):
+        dy, dx = self.direction
+        new_head = (self.head[0] + dy, self.head[1] + dx)
+        self.body.insert(0, new_head)
+        if not self.grow_pending:
+            self.body.pop()
+        else:
+            self.grow_pending = False</code></pre>
+
+<p><strong>Why it won</strong>: <a href="https://github.com/obra/superpowers">Superpowers'</a> two-stage review (spec compliance first, then code quality) combined with <a href="https://github.com/github/spec-kit">Spec Kit's</a> structured acceptance criteria created a natural pressure toward clean architecture. The spec toolkit demanded scenarios; the orchestrator demanded quality.</p>
+
+<h3>&#9889; Best for Speed: Squad + GSD (132 LOC)</h3>
+
+<div class="section-gif">
+<img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-gsd.gif" alt="Squad + GSD gameplay">
+<div class="caption">The leanest implementation: no classes, just functions that ship</div>
+</div>
+
+<p>The shortest, leanest implementation. No classes, no abstractions &mdash; just functions that do exactly what the spec says.</p>
+
+<pre><code>def play(stdscr):
+    h, w = stdscr.getmaxyx()
+    snake = [(cy, cx), (cy, cx - 1), (cy, cx - 2)]
+    direction = (0, 1)
+    # ... 130 lines of clean, working game</code></pre>
+
+<p><strong>The vibe</strong>: <a href="https://github.com/gsd-build/get-shit-done">GSD's</a> "ship it" philosophy met Squad's pragmatic pipeline and produced the fastest path from spec to working game.</p>
+
+<h3>&#129514; Most Testable: Squad + OpenSpec (157 LOC)</h3>
+
+<div class="section-gif">
+<img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/squad-openspec.gif" alt="Squad + OpenSpec gameplay">
+<div class="caption">Dict-based state, pure functions: trivially testable without mocking</div>
+</div>
+
+<p>Dict-based state with pure functions. Every game operation is a function that takes state in and returns state out.</p>
+
+<pre><code>def step(state):
+    """Advance game one tick. Returns updated state."""
+    dy, dx = DIRECTIONS[state['dir']]
+    hy, hx = state['snake'][0]
+    nh = (hy + dy, hx + dx)
+    # Pure logic, trivially testable</code></pre>
+
+<p><strong>Why it matters</strong>: You could drop <code>pytest</code> tests on this without mocking a single thing. The state is just a dict. The functions are pure. This is what TDD dreams are made of.</p>
+
+<h3>Most Creative: DeerFlow + OpenSpec (171 LOC)</h3>
+
+<div class="section-gif">
+<img src="https://raw.githubusercontent.com/nimanch/multi-agent-benchmark/main/gifs/deerflow-openspec.gif" alt="DeerFlow + OpenSpec gameplay">
+<div class="caption">Event bus architecture: DeerFlow's research agent thought about extensibility</div>
+</div>
+
+<p>The only implementation with an event bus pattern:</p>
+
+<pre><code>class EventBus:
+    def on(self, event, handler):
+        self._handlers.setdefault(event, []).append(handler)
+    def emit(self, event, **kwargs):
+        for h in self._handlers.get(event, []):
+            h(**kwargs)</code></pre>
+
+<p><a href="https://github.com/bytedance/deer-flow">DeerFlow's</a> research-first approach led to an architecture you'd use for a real game engine, not a toy project. Over-engineered for Snake? Sure. But it shows the framework <em>thinking</em> about extensibility.</p>
+
+<h2>The Big Insight</h2>
+
+<div class="callout">
+<strong>Spec toolkits shape architecture more than orchestrators.</strong><br><br>
+The orchestrator (Superpowers vs DeerFlow vs Squad) affected code <em>quality</em>. But the spec toolkit affected code <em>structure</em>:<br>
+&bull; <strong>GSD</strong> &rarr; procedural, minimal, ship-focused<br>
+&bull; <strong>Spec Kit</strong> &rarr; OOP, typed, well-separated concerns<br>
+&bull; <strong>OpenSpec</strong> &rarr; functional, state-as-data, testable<br><br>
+<strong>The orchestrator is the quality dial. The spec toolkit is the architecture dial.</strong>
+</div>
+
+<h2>More Patterns</h2>
+
+<p><strong>Two-stage review is genuinely better.</strong> Superpowers' approach of reviewing spec compliance <em>separately</em> from code quality caught things that single-pass review missed. Like having a PM and a tech lead review independently.</p>
+
+<p><strong>Research agents add polish at scale.</strong> DeerFlow's research-first pattern seems overkill for a snake game. Extrapolate to a real project and it could prevent entire categories of mistakes.</p>
+
+<p><strong>"Just ship it" has its place.</strong> Squad + GSD: 132 lines, perfectly working game. Sometimes you don't need five classes and an event bus.</p>
+
+<h2>The Honest Caveats</h2>
+
+<ol>
+<li><strong>These frameworks are AI agent guidance systems</strong>, not automated compilers. They provide prompts, workflows, and structure for AI agents to follow.</li>
+<li><strong>DeerFlow couldn't run natively on ARM64/Jetson</strong> (needs Python 3.12+). Its workflow was simulated based on its well-documented architecture.</li>
+<li><strong>Squad requires Copilot Pro+ for cloud multi-agent.</strong> The pipeline was simulated locally following its documented architecture.</li>
+<li><strong>Zero interventions across all 9</strong> partly reflects that Snake is a well-understood problem. A more complex project would reveal bigger differences.</li>
+</ol>
+
+<h2>My Recommendations</h2>
+
+<table class="results-table">
+<thead><tr><th>If you need...</th><th>Use this</th></tr></thead>
+<tbody>
+<tr><td>Quality (solo dev)</td><td class="highlight"><a href="https://github.com/obra/superpowers">Superpowers</a> + <a href="https://github.com/github/spec-kit">Spec Kit</a></td></tr>
+<tr><td>Speed (team shipping)</td><td class="highlight">Squad + <a href="https://github.com/gsd-build/get-shit-done">GSD</a></td></tr>
+<tr><td>Testability</td><td class="highlight">Squad + <a href="https://github.com/Fission-AI/openspec">OpenSpec</a></td></tr>
+<tr><td>Complex/research-heavy</td><td class="highlight"><a href="https://github.com/bytedance/deer-flow">DeerFlow</a> + any spec toolkit</td></tr>
+</tbody>
+</table>
+
+<hr>
+
+<p><strong>The real test would be building something complex</strong> &mdash; a full-stack app, a distributed system &mdash; with each combination and measuring over weeks, not minutes. That's the experiment I'd love to see.</p>
+
+<p>For now, if you're choosing your AI agent stack in 2026, here's the bottom line: <strong>the spec toolkit matters more than you think, and two-stage review is worth the overhead.</strong></p>
+
+<div class="repo-links" style="margin-top: 30px; text-align: center;">
+<strong>&#128187; All code &amp; GIFs:</strong> <a href="https://github.com/nimanch/multi-agent-benchmark">github.com/nimanch/multi-agent-benchmark</a>
+</div>
+
+<hr>
+
+<p class="footer">Nishant Manchanda builds things in Seattle. He's interested in AI agents, graph-based memory, and cats (two tabbies).</p>
+
+<div class="repo-links" style="font-size: 13px;">
+<strong>Tools used in this benchmark:</strong><br>
+&bull; <a href="https://github.com/obra/superpowers">Superpowers</a> (obra) &mdash; 94K+ stars<br>
+&bull; <a href="https://github.com/bytedance/deer-flow">DeerFlow 2.0</a> (ByteDance)<br>
+&bull; <a href="https://github.com/github/squad">Squad</a> (GitHub Copilot)<br>
+&bull; <a href="https://github.com/gsd-build/get-shit-done">GSD / Get Shit Done</a> &mdash; 35K+ stars<br>
+&bull; <a href="https://github.com/github/spec-kit">GitHub Spec Kit</a> &mdash; 72.7K stars<br>
+&bull; <a href="https://github.com/Fission-AI/openspec">OpenSpec</a> (Fission-AI)<br>
+</div>
+
+</body>
+</html>
