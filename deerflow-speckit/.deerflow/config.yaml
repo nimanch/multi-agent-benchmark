@@ -1,0 +1,28 @@
+config_version: 3
+
+models:
+  - name: gpt-4o
+    display_name: GPT-4o (GitHub Models)
+    use: langchain_openai:ChatOpenAI
+    model: gpt-4o
+    api_key: <REDACTED>
+    base_url: https://models.inference.ai.azure.com
+    max_tokens: 4096
+    temperature: 0.7
+
+tool_groups:
+  - name: web
+  - name: file:read
+  - name: file:write
+  - name: bash
+
+tools:
+  - name: write_file
+    group: file:write
+    use: deerflow.sandbox.tools:write_file_tool
+  - name: read_file
+    group: file:read
+    use: deerflow.sandbox.tools:read_file_tool
+
+sandbox:
+  use: deerflow.sandbox.local:LocalSandboxProvider
