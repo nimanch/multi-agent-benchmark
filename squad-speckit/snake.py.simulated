@@ -1,0 +1,214 @@
+#!/usr/bin/env python3
+"""Snake Game - Generated via Squad (Copilot) + Spec Kit workflow.
+
+Squad simulated pipeline (Coordinator → Plan → Implement → Review → Test).
+Spec Kit provided feature scenario specs and acceptance criteria.
+
+Architecture: Multi-file inspired but consolidated. Uses Protocol pattern.
+"""
+
+import curses
+import random
+from typing import Protocol, Tuple, List
+
+
+class Renderable(Protocol):
+    """Protocol for anything that can be drawn on screen."""
+    def draw(self, stdscr) -> None: ...
+
+
+class Position:
+    """2D position with arithmetic."""
+    __slots__ = ('y', 'x')
+
+    def __init__(self, y: int, x: int):
+        self.y = y
+        self.x = x
+
+    def __add__(self, other):
+        return Position(self.y + other.y, self.x + other.x)
+
+    def __eq__(self, other):
+        return isinstance(other, Position) and self.y == other.y and self.x == other.x
+
+    def __hash__(self):
+        return hash((self.y, self.x))
+
+    def as_tuple(self):
+        return (self.y, self.x)
+
+
+# Direction constants
+UP = Position(-1, 0)
+DOWN = Position(1, 0)
+LEFT = Position(0, -1)
+RIGHT = Position(0, 1)
+REVERSE = {UP: DOWN, DOWN: UP, LEFT: RIGHT, RIGHT: LEFT}
+
+
+class SnakeEntity:
+    """The snake with movement logic."""
+
+    def __init__(self, start: Position):
+        self.segments: List[Position] = [
+            start,
+            Position(start.y, start.x - 1),
+            Position(start.y, start.x - 2),
+        ]
+        self.direction = RIGHT
+        self._grow = False
+
+    @property
+    def head(self) -> Position:
+        return self.segments[0]
+
+    def turn(self, new_dir: Position):
+        if new_dir != REVERSE.get(self.direction):
+            self.direction = new_dir
+
+    def advance(self):
+        new_head = self.head + self.direction
+        self.segments.insert(0, new_head)
+        if self._grow:
+            self._grow = False
+        else:
+            self.segments.pop()
+
+    def eat(self):
+        self._grow = True
+
+    def hits_self(self) -> bool:
+        return self.head in self.segments[1:]
+
+    def hits_wall(self, h: int, w: int) -> bool:
+        return not (0 < self.head.y < h - 1 and 0 < self.head.x < w - 1)
+
+    def draw(self, stdscr):
+        for i, seg in enumerate(self.segments):
+            try:
+                stdscr.addch(seg.y, seg.x, 'O' if i == 0 else '█')
+            except curses.error:
+                pass
+
+
+class FoodEntity:
+    """Food with random placement."""
+
+    def __init__(self, h, w, occupied):
+        self.pos = self._place(h, w, occupied)
+
+    def _place(self, h, w, occupied):
+        occ = {p.as_tuple() if isinstance(p, Position) else p for p in occupied}
+        while True:
+            y, x = random.randint(1, h - 2), random.randint(1, w - 2)
+            if (y, x) not in occ:
+                return Position(y, x)
+
+    def respawn(self, h, w, occupied):
+        self.pos = self._place(h, w, occupied)
+
+    def draw(self, stdscr):
+        try:
+            stdscr.addch(self.pos.y, self.pos.x, '*', curses.A_BOLD)
+        except curses.error:
+            pass
+
+
+def draw_ui(stdscr, snake, food, score, h, w):
+    """Composite render."""
+    stdscr.erase()
+    stdscr.border()
+    s = f" Score: {score} "
+    try:
+        stdscr.addstr(0, max(1, (w - len(s)) // 2), s, curses.A_BOLD)
+    except curses.error:
+        pass
+    food.draw(stdscr)
+    snake.draw(stdscr)
+    stdscr.refresh()
+
+
+def game_over_ui(stdscr, score, h, w):
+    stdscr.erase()
+    lines = ["GAME OVER", f"Final Score: {score}", "r=restart / q=quit"]
+    for i, l in enumerate(lines):
+        try:
+            stdscr.addstr(
+                h // 2 - 1 + i,
+                max(0, (w - len(l)) // 2),
+                l,
+                curses.A_BOLD if i == 0 else 0,
+            )
+        except curses.error:
+            pass
+    stdscr.refresh()
+    stdscr.nodelay(False)
+    while True:
+        k = stdscr.getch()
+        if k == ord('q'):
+            return False
+        if k == ord('r'):
+            return True
+
+
+def _wait_for_min_size(stdscr, min_w: int = 20, min_h: int = 10) -> Tuple[int, int]:
+    """Block until terminal meets minimum size."""
+    stdscr.nodelay(False)
+    while True:
+        h, w = stdscr.getmaxyx()
+        if w >= min_w and h >= min_h:
+            return h, w
+        stdscr.erase()
+        msg1 = "Terminal too small"
+        msg2 = f"Minimum size: {min_w}x{min_h}"
+        msg3 = "Resize and press any key"
+        for i, msg in enumerate([msg1, msg2, msg3]):
+            try:
+                stdscr.addstr(h // 2 - 1 + i, max(0, (w - len(msg)) // 2), msg, curses.A_BOLD if i == 0 else 0)
+            except curses.error:
+                pass
+        stdscr.refresh()
+        stdscr.getch()
+
+
+def main(stdscr):
+    curses.curs_set(0)
+    keymap = {
+        curses.KEY_UP: UP,
+        curses.KEY_DOWN: DOWN,
+        curses.KEY_LEFT: LEFT,
+        curses.KEY_RIGHT: RIGHT,
+    }
+
+    while True:
+        h, w = _wait_for_min_size(stdscr, min_w=20, min_h=10)
+        stdscr.nodelay(True)
+        stdscr.timeout(100)
+
+        snake = SnakeEntity(Position(h // 2, w // 2))
+        food = FoodEntity(h, w, [s.as_tuple() for s in snake.segments])
+        score = 0
+
+        while True:
+            key = stdscr.getch()
+            if key in keymap:
+                snake.turn(keymap[key])
+
+            snake.advance()
+
+            if snake.hits_wall(h, w) or snake.hits_self():
+                break
+
+            if snake.head == food.pos:
+                score += 10
+                snake.eat()
+                food.respawn(h, w, [s.as_tuple() for s in snake.segments])
+
+            draw_ui(stdscr, snake, food, score, h, w)
+
+        if not game_over_ui(stdscr, score, h, w):
+            break
+
+
+if __name__ == "__main__":
+    curses.wrapper(main)

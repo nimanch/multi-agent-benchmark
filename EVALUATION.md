@@ -12,7 +12,7 @@
 | **deerflow-openspec** | 5 | 4 | 3 | 3 | 2 | **17** |
 | **squad-gsd** | 5 | 4 | 4 | 4 | 4 | **21** |
 | **squad-speckit** | 4 | 3 | 4 | 4 | 2 | **17** |
-| **squad-openspec** | 5 | 4 | 4 | 3 | 2 | **18** |
+| **squad-openspec** | 5 | 4 | 4 | 4 | 4 | **21** |
 
 ## Spec Requirements Checklist
 
@@ -33,7 +33,7 @@
 | Final score shown | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 'q' quit / 'r' restart | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | 100ms tick | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Min terminal 20x10 | ✅ | ⚠️ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Min terminal 20x10 | ✅ | ⚠️ | ❌ | ✅ | ❌ | ❌ | ✅ | ❌ | ✅ |
 
 ⚠️ = implemented but with issues
 
@@ -242,9 +242,9 @@
 
 ---
 
-### 9. squad-openspec (Score: 18)
+### 9. squad-openspec (Score: 21)
 
-**Architecture:** Dict-based state, functional style. "TDD-inspired" with pure logic functions.
+**Architecture:** Dict-based state, functional style with pure logic functions separated from rendering.
 
 **Strengths:**
 - `initial_state`, `process_input`, `step` are genuinely testable pure functions
@@ -252,19 +252,21 @@
 - String-based direction names with lookup dicts are clear
 - Separation of logic and rendering is the cleanest of any implementation
 - Most testable architecture
+- **`ensure_min_terminal_size` with resize-and-wait loop** — allows user to resize terminal and continue, or press 'q' to quit. Best terminal size UX of all implementations.
+- Smart self-collision: accounts for tail movement when not eating (moving into current tail position is allowed)
+- `try/except curses.error` on all rendering calls — robust against edge-of-screen writes
+- Well-defined constants (`TICK_MS`, `MIN_WIDTH`, `MIN_HEIGHT`) at module level
 
 **Weaknesses:**
-- **No terminal size check**
 - Dict-based state lacks type safety (easy to typo a key)
-- No extras beyond spec
 
 **Bugs:** None.
 
 **Spec Compliance: 5** — All requirements met.
-**Correctness: 4** — Works correctly.
+**Correctness: 4** — Works correctly. Smart tail-collision handling is a nice touch.
 **Code Quality: 4** — Clean functional design. Dict state is a tradeoff (testable but not type-safe).
-**Completeness: 3** — Spec only, no extras.
-**Robustness: 2** — No terminal size check, no error handling.
+**Completeness: 4** — Terminal size check with resize loop, constants, robust rendering.
+**Robustness: 4** — Terminal size check with interactive resize loop, try/except on all rendering.
 
 ---
 
@@ -274,10 +276,10 @@
 |---|---|---|---|
 | 🥇 1 | **deerflow-gsd** | 22 | Best overall. Only one with food-spawn safety net. Graceful terminal size check. Decorative game-over box. No bugs. |
 | 🥈 2 | **squad-gsd** | 21 | Cleanest, most readable code. Does everything right with zero over-engineering. Terminal size check. |
-| 🥉 3 | **superpowers-gsd** | 20 | Solid all-around. Unicode borders. Terminal size check (though crashes ungracefully). |
-| 4 | **superpowers-speckit** | 19 | Best architecture/OOP, but grow-timing bug costs it. |
-| 5 | **squad-openspec** | 18 | Most testable design. Clean but bare-bones. |
-| 5 | **deerflow-speckit** | 18 | Good state machine pattern. Caches terminal size (fragile). |
+| 🥈 2 | **squad-openspec** | 21 | Most testable design. Best terminal size UX (interactive resize loop). Smart self-collision handling. |
+| 4 | **superpowers-gsd** | 20 | Solid all-around. Unicode borders. Terminal size check (though crashes ungracefully). |
+| 5 | **superpowers-speckit** | 19 | Best architecture/OOP, but grow-timing bug costs it. |
+| 6 | **deerflow-speckit** | 18 | Good state machine pattern. Caches terminal size (fragile). |
 | 7 | **superpowers-openspec** | 17 | Decent functional approach. Misleading "immutable" claim. |
 | 7 | **deerflow-openspec** | 17 | EventBus with zero subscribers = architecture astronautics. `deque` is nice though. |
 | 7 | **squad-speckit** | 17 | Over-typed. Unused Protocol. Grow-timing bug. |
@@ -299,7 +301,7 @@ All three GSD implementations (deerflow, squad, superpowers) ranked in the top 3
 - 100ms tick rate
 
 ### Spec requirements commonly missed
-- **Minimum terminal size check (20×10)**: Only 3 of 9 implemented this (superpowers-gsd, deerflow-gsd, squad-gsd)
+- **Minimum terminal size check (20×10)**: Only 4 of 9 implemented this (superpowers-gsd, deerflow-gsd, squad-gsd, squad-openspec)
 
 ### Ambiguous spec requirements
 1. **"Border drawn around play area"** — The spec doesn't specify whether to use `stdscr.border()` (simple ASCII) or manual Unicode box-drawing characters. Both are valid interpretations. Three implementations (superpowers-gsd, superpowers-speckit, superpowers-openspec) drew manual Unicode borders; the rest used `stdscr.border()`.
